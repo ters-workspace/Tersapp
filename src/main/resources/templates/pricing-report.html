@@ -1,9 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="ar" dir="rtl"
       xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
 
+    ```
     <meta charset="UTF-8" />
 
     <style type="text/css">
@@ -56,9 +58,15 @@
         .header {
             width: 100%;
             background: #1e2a4a;
-            padding: 16px 18mm;
+            padding: 12px 18mm;
             color: #ffffff;
         }
+
+        /*
+           Using LTR here intentionally so:
+           First cell = LEFT
+           Second cell = RIGHT
+        */
 
         .header-table {
             width: 100%;
@@ -73,48 +81,58 @@
 
 
         /* =========================================
-           HEADER TITLE - LEFT
+           HEADER LOGO - LEFT
+        ========================================= */
+
+        .header-logo-cell {
+            width: 35%;
+            text-align: left;
+            direction: ltr;
+            padding: 0;
+        }
+
+        .logo {
+            width: 115px;
+            height: auto;
+            display: block;
+            margin: 0;
+        }
+
+
+        /* =========================================
+           HEADER TITLE - RIGHT
         ========================================= */
 
         .header-title-cell {
-            width: 70%;
-            text-align: left;
+            width: 65%;
+            text-align: right;
             direction: rtl;
+            padding: 0;
         }
 
         .title-ar {
             margin: 0;
             padding: 0;
-            font-size: 24px;
+
+            font-size: 22px;
             font-weight: 700;
             line-height: 1.3;
-            text-align: left;
+
+            text-align: right;
             direction: rtl;
         }
 
         .title-en {
-            margin-top: 3px;
+            margin-top: 2px;
+            padding: 0;
+
             font-size: 10px;
+            font-weight: 400;
+
             color: #d8deed;
+
             direction: ltr;
-            text-align: left;
-        }
-
-
-        /* =========================================
-           HEADER LOGO - RIGHT
-        ========================================= */
-
-        .header-logo-cell {
-            width: 30%;
             text-align: right;
-            direction: ltr;
-        }
-
-        .logo {
-            width: 82px;
-            height: auto;
-            display: inline-block;
         }
 
 
@@ -147,43 +165,25 @@
         /* =========================================
            SECTION TITLE
 
-           VISUAL ORDER:
-           English = LEFT
-           Arabic  = RIGHT
+           RIGHT:
+           Arabic
 
-           English is smaller and lighter.
+           NEXT TO IT:
+           English
         ========================================= */
 
         .section-title {
             width: 100%;
 
-            direction: ltr;
-
-            text-align: left;
+            direction: rtl;
+            text-align: right;
 
             border-bottom: 2px solid #f5453d;
 
             padding-bottom: 5px;
-
             margin-bottom: 9px;
 
             white-space: nowrap;
-        }
-
-        .section-title-en {
-            display: inline-block;
-
-            direction: ltr;
-
-            font-size: 9px;
-
-            font-weight: 400;
-
-            color: #7b8496;
-
-            margin: 0;
-
-            padding: 0;
         }
 
         .section-title-ar {
@@ -192,14 +192,30 @@
             direction: rtl;
 
             font-size: 13px;
-
             font-weight: 700;
 
             color: #1e2a4a;
 
-            margin-left: 4px;
-
+            margin: 0;
             padding: 0;
+
+            vertical-align: baseline;
+        }
+
+        .section-title-en {
+            display: inline-block;
+
+            direction: ltr;
+
+            font-size: 9px;
+            font-weight: 400;
+
+            color: #7b8496;
+
+            margin: 0 5px 0 0;
+            padding: 0;
+
+            vertical-align: baseline;
         }
 
 
@@ -217,7 +233,6 @@
             padding: 10px 12px;
 
             direction: rtl;
-
             text-align: right;
 
             min-height: 0;
@@ -255,10 +270,10 @@
 
             color: #596273;
 
+            font-size: 10px;
             font-weight: 700;
 
             direction: rtl;
-
             text-align: right;
         }
 
@@ -267,10 +282,10 @@
 
             color: #1f2430;
 
+            font-size: 10px;
             font-weight: 400;
 
             direction: rtl;
-
             text-align: right;
         }
 
@@ -281,7 +296,6 @@
 
         .number-value {
             direction: ltr;
-
             text-align: right;
         }
 
@@ -375,7 +389,6 @@
         .parts-table td.part-name,
         .parts-table td.part-type {
             text-align: right;
-
             direction: rtl;
         }
 
@@ -386,7 +399,6 @@
 
         .money-value {
             direction: ltr;
-
             text-align: center;
         }
 
@@ -403,15 +415,23 @@
             table-layout: fixed;
 
             direction: rtl;
+
+            font-size: 10px;
         }
 
         .summary td {
-            padding: 8px 11px;
+            padding: 9px 11px;
 
             border-bottom: 1px solid #d9dde5;
 
             vertical-align: middle;
         }
+
+        /*
+           First TD in RTL table appears on the RIGHT.
+           Therefore:
+           summary-label = RIGHT
+        */
 
         .summary-label {
             width: 70%;
@@ -423,7 +443,15 @@
             text-align: right;
 
             direction: rtl;
+
+            font-size: 10px;
         }
+
+        /*
+           Second TD appears on the LEFT.
+           Therefore:
+           summary-value = LEFT
+        */
 
         .summary-value {
             width: 30%;
@@ -435,6 +463,8 @@
             text-align: left;
 
             direction: ltr;
+
+            font-size: 10px;
         }
 
 
@@ -460,8 +490,7 @@
 
             padding: 11px 12px;
 
-            font-size: 14px;
-
+            font-size: 12px;
             font-weight: 700;
         }
 
@@ -480,7 +509,6 @@
             padding: 11px 12px;
 
             direction: rtl;
-
             text-align: right;
 
             min-height: 0;
@@ -541,7 +569,6 @@
 
         .footer-left {
             direction: ltr;
-
             text-align: left;
         }
 
@@ -552,20 +579,19 @@
 
         .footer-right {
             direction: rtl;
-
             text-align: right;
         }
 
     </style>
+    ```
 
 </head>
-
 
 <body dir="rtl">
 
 <div class="page">
 
-
+    ```
     <!-- =========================================
          HEADER
     ========================================= -->
@@ -576,7 +602,19 @@
 
             <tr>
 
-                <!-- LEFT : REPORT TITLE -->
+                <!-- LEFT : LOGO -->
+
+                <td class="header-logo-cell">
+
+                    <img
+                            class="logo"
+                            src="data:image/png;base64,${logo}"
+                            alt="TERS Logo" />
+
+                </td>
+
+
+                <!-- RIGHT : REPORT TITLE -->
 
                 <td class="header-title-cell">
 
@@ -587,18 +625,6 @@
                     <div class="title-en">
                         Pricing Report
                     </div>
-
-                </td>
-
-
-                <!-- RIGHT : LOGO -->
-
-                <td class="header-logo-cell">
-
-                    <img
-                            class="logo"
-                            src="data:image/png;base64,${logo}"
-                            alt="TERS Logo" />
 
                 </td>
 
@@ -624,13 +650,13 @@
 
             <div class="section-title">
 
-                <span class="section-title-en">
-                    Problem Description
-                </span>
+            <span class="section-title-ar">
+                وصف المشكلة
+            </span>
 
-                <span class="section-title-ar">
-                    وصف المشكلة
-                </span>
+                <span class="section-title-en">
+                Problem Description
+            </span>
 
             </div>
 
@@ -650,28 +676,23 @@
 
             <div class="section-title">
 
-                <span class="section-title-en">
-                    Order Information
-                </span>
+            <span class="section-title-ar">
+                بيانات الطلب
+            </span>
 
-                <span class="section-title-ar">
-                    بيانات الطلب
-                </span>
+                <span class="section-title-en">
+                Order Information
+            </span>
 
             </div>
 
 
-            <table class="info-table"
-                   dir="rtl">
+            <table class="info-table" dir="rtl">
 
                 <tr>
 
-                    <td class="info-value number-value">
-                        ${reportNumber}
-                    </td>
-
                     <td class="info-label">
-                        رقم التقرير
+                        رقم الطلب
                     </td>
 
                     <td class="info-value number-value">
@@ -679,7 +700,11 @@
                     </td>
 
                     <td class="info-label">
-                        رقم الطلب
+                        رقم التقرير
+                    </td>
+
+                    <td class="info-value number-value">
+                        ${reportNumber}
                     </td>
 
                 </tr>
@@ -687,12 +712,8 @@
 
                 <tr>
 
-                    <td class="info-value number-value">
-                        ${phone}
-                    </td>
-
                     <td class="info-label">
-                        رقم الجوال
+                        العميل
                     </td>
 
                     <td class="info-value">
@@ -700,7 +721,11 @@
                     </td>
 
                     <td class="info-label">
-                        العميل
+                        رقم الجوال
+                    </td>
+
+                    <td class="info-value number-value">
+                        ${phone}
                     </td>
 
                 </tr>
@@ -708,12 +733,8 @@
 
                 <tr>
 
-                    <td class="info-value">
-                        ${serviceOption}
-                    </td>
-
                     <td class="info-label">
-                        نوع الخدمة
+                        السيارة
                     </td>
 
                     <td class="info-value">
@@ -721,7 +742,11 @@
                     </td>
 
                     <td class="info-label">
-                        السيارة
+                        نوع الخدمة
+                    </td>
+
+                    <td class="info-value">
+                        ${serviceOption}
                     </td>
 
                 </tr>
@@ -739,19 +764,18 @@
 
             <div class="section-title">
 
-                <span class="section-title-en">
-                    Parts and Labor
-                </span>
+            <span class="section-title-ar">
+                القطع وأجور العمل
+            </span>
 
-                <span class="section-title-ar">
-                    القطع وأجور العمل
-                </span>
+                <span class="section-title-en">
+                Parts and Labor
+            </span>
 
             </div>
 
 
-            <table class="parts-table"
-                   dir="rtl">
+            <table class="parts-table" dir="rtl">
 
                 <thead>
 
@@ -815,93 +839,92 @@
 
             <div class="section-title">
 
-                <span class="section-title-en">
-                    Cost Summary
-                </span>
+            <span class="section-title-ar">
+                ملخص التكلفة
+            </span>
 
-                <span class="section-title-ar">
-                    ملخص التكلفة
-                </span>
+                <span class="section-title-en">
+                Cost Summary
+            </span>
 
             </div>
 
 
-            <table class="summary"
-                   dir="rtl">
+            <table class="summary" dir="rtl">
 
                 <tr>
-
-                    <td class="summary-value">
-                        ${partsTotal} SAR
-                    </td>
 
                     <td class="summary-label">
                         إجمالي القطع
                     </td>
 
+                    <td class="summary-value">
+                        ${partsTotal} SAR
+                    </td>
+
                 </tr>
 
 
                 <tr>
-
-                    <td class="summary-value">
-                        ${laborTotal} SAR
-                    </td>
 
                     <td class="summary-label">
                         إجمالي أجور العمل
                     </td>
 
+                    <td class="summary-value">
+                        ${laborTotal} SAR
+                    </td>
+
                 </tr>
 
 
                 <tr>
-
-                    <td class="summary-value">
-                        ${subtotal} SAR
-                    </td>
 
                     <td class="summary-label">
                         المجموع قبل الخصم
                     </td>
 
+                    <td class="summary-value">
+                        ${subtotal} SAR
+                    </td>
+
                 </tr>
 
 
                 <tr>
-
-                    <td class="summary-value discount">
-                        - ${discount} SAR
-                    </td>
 
                     <td class="summary-label discount">
                         الخصم
                     </td>
 
+                    <td class="summary-value discount">
+                        - ${discount} SAR
+                    </td>
+
                 </tr>
 
 
                 <tr>
-
-                    <td class="summary-value">
-                        ${afterDiscount} SAR
-                    </td>
 
                     <td class="summary-label">
                         المجموع بعد الخصم
                     </td>
 
+                    <td class="summary-value">
+                        ${afterDiscount} SAR
+                    </td>
+
                 </tr>
 
 
                 <tr>
 
-                    <td class="summary-value">
-                        ${vat} SAR
-                    </td>
-
                     <td class="summary-label">
                         ضريبة القيمة المضافة (15%)
+                    </td>
+
+                    <td class="summary-value">
+                        ${vat} SAR
                     </td>
 
                 </tr>
@@ -909,12 +932,12 @@
 
                 <tr class="grand-total">
 
-                    <td class="summary-value">
-                        ${grandTotal} SAR
-                    </td>
-
                     <td class="summary-label">
                         الإجمالي النهائي
+                    </td>
+
+                    <td class="summary-value">
+                        ${grandTotal} SAR
                     </td>
 
                 </tr>
@@ -962,7 +985,7 @@
         </table>
 
     </div>
-
+    ```
 
 </div>
 

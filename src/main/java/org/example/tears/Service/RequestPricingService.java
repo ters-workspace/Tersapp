@@ -884,7 +884,7 @@ public class RequestPricingService {
 
                                 : request.getCar()
                                 .getModel()
-                                .getName()
+                                .getNameAr()
                 )
         );
 
@@ -1132,9 +1132,9 @@ public class RequestPricingService {
                         HttpHeaders
                                 .CONTENT_DISPOSITION,
 
-                        "attachment; filename=pricing-report-"
-                                + report.getReportNumber()
-                                + ".pdf"
+                        "attachment;filename=pricing-report-"
+                                +report.getReportNumber()
+                                +".pdf"
                 )
 
                 .contentType(
