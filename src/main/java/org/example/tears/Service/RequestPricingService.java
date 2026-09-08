@@ -878,7 +878,7 @@ public class RequestPricingService {
 
                         request.getCar() == null
                                 || request.getCar()
-                                .getModel() == null
+                                .getModel().getNameAr() == null
 
                                 ? "-"
 

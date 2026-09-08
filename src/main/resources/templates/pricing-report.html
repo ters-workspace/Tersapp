@@ -86,11 +86,6 @@
             vertical-align: middle;
         }
 
-
-        /* =========================================
-           HEADER TITLE - RIGHT
-        ========================================= */
-
         .header-title-cell {
             width: 70%;
             text-align: right;
@@ -119,7 +114,7 @@
 
 
         /* =========================================
-           HEADER LOGO - FAR LEFT
+           HEADER LOGO
         ========================================= */
 
         .header-logo-cell {
@@ -217,26 +212,34 @@
 
         /* =========================================
            ORDER INFORMATION
-        ========================================= */
+
+           PHYSICAL TABLE = LTR
+
+           Visual result:
+
+           RIGHT:
+           label | value | label | value
+
+           LEFT:
+           =========================================
+        */
 
         .info-table {
             width: 100%;
             border-collapse: collapse;
             border-spacing: 0;
             table-layout: fixed;
-            direction: rtl;
+            direction: ltr;
         }
 
         .info-table tr {
-            direction: rtl;
+            direction: ltr;
         }
 
         .info-table td {
             border: 1px solid #d9dde5;
             padding: 9px 10px;
             vertical-align: middle;
-            text-align: right;
-            direction: rtl;
         }
 
         .info-label {
@@ -256,6 +259,13 @@
             text-align: right;
         }
 
+        .info-number {
+            direction: ltr !important;
+            text-align: left !important;
+            unicode-bidi: embed;
+            white-space: nowrap;
+        }
+
 
         /* =========================================
            NUMBERS / CODES
@@ -263,21 +273,31 @@
 
         .number-value {
             direction: ltr !important;
-            text-align: right !important;
+            text-align: left !important;
+            unicode-bidi: embed;
+            white-space: nowrap;
         }
 
 
         /* =========================================
            PARTS TABLE
-           
-           RTL ORDER:
-           م
-           اسم القطعة
-           النوع
-           الكمية
-           سعر القطعة
-           أجرة العمل
+
+           IMPORTANT:
+           Physical HTML order is LTR.
+
+           HTML:
            الإجمالي
+           أجرة العمل
+           سعر القطعة
+           الكمية
+           النوع
+           اسم القطعة
+           م
+
+           Visual PDF:
+
+           م | اسم القطعة | النوع | الكمية |
+           سعر القطعة | أجرة العمل | الإجمالي
         ========================================= */
 
         .parts-table {
@@ -285,20 +305,20 @@
             border-collapse: collapse;
             border-spacing: 0;
             table-layout: fixed;
-            direction: rtl;
+            direction: ltr;
             font-size: 9px;
         }
 
         .parts-table thead {
-            direction: rtl;
+            direction: ltr;
         }
 
         .parts-table tbody {
-            direction: rtl;
+            direction: ltr;
         }
 
         .parts-table tr {
-            direction: rtl;
+            direction: ltr;
         }
 
         .parts-table th {
@@ -328,17 +348,6 @@
 
         /* =========================================
            PARTS COLUMNS
-           
-           RTL:
-           RIGHT --------------------> LEFT
-
-           م
-           اسم القطعة
-           النوع
-           الكمية
-           سعر القطعة
-           أجرة العمل
-           الإجمالي
         ========================================= */
 
         .col-idx {
@@ -374,28 +383,68 @@
            PART NAME / TYPE
         ========================================= */
 
-        .parts-table td.part-name,
-        .parts-table td.part-type {
-            text-align: center;
-            direction: rtl;
+        .part-name {
+            direction: rtl !important;
+            text-align: center !important;
+        }
+
+        .part-type {
+            direction: rtl !important;
+            text-align: center !important;
+        }
+
+
+        /* =========================================
+           PART NUMBERS
+        ========================================= */
+
+        .part-number {
+            direction: ltr !important;
+            text-align: center !important;
+            unicode-bidi: embed;
+            white-space: nowrap;
         }
 
 
         /* =========================================
            MONEY
+
+           Keep:
+
+           670.00 SAR
+
+           as one LTR unit.
         ========================================= */
 
         .money-value {
-            direction: ltr;
-            text-align: center;
+            direction: ltr !important;
+            text-align: center !important;
+            unicode-bidi: embed;
+            white-space: nowrap;
+        }
+
+        .money-value span {
+            direction: ltr !important;
+            unicode-bidi: embed;
+            white-space: nowrap;
         }
 
 
         /* =========================================
-           SUMMARY
-           
-           RIGHT = LABEL
-           LEFT  = VALUE
+           COST SUMMARY
+
+           Physical table = LTR
+
+           HTML order:
+
+           VALUE | LABEL
+
+           Visual result:
+
+           LABEL ---------------- VALUE
+
+           Arabic label = RIGHT
+           Number        = LEFT
         ========================================= */
 
         .summary {
@@ -403,11 +452,11 @@
             border-collapse: collapse;
             border-spacing: 0;
             table-layout: fixed;
-            direction: rtl;
+            direction: ltr;
         }
 
         .summary tr {
-            direction: rtl;
+            direction: ltr;
         }
 
         .summary td {
@@ -420,16 +469,26 @@
             width: 70%;
             color: #596273;
             font-weight: 700;
-            text-align: right;
             direction: rtl;
+            text-align: right;
+            unicode-bidi: embed;
         }
 
         .summary-value {
             width: 30%;
             color: #1f2430;
             font-weight: 700;
-            text-align: left;
-            direction: ltr;
+            direction: ltr !important;
+            text-align: left !important;
+            unicode-bidi: embed;
+            white-space: nowrap;
+        }
+
+        .summary-money {
+            direction: ltr !important;
+            text-align: left !important;
+            unicode-bidi: embed;
+            white-space: nowrap;
         }
 
 
@@ -605,7 +664,6 @@
 
             </div>
 
-
             <div class="problem-box">
                 ${problem}
             </div>
@@ -632,72 +690,72 @@
             </div>
 
 
-            <table class="info-table" dir="rtl">
+            <table class="info-table">
 
                 <tr>
 
-                    <!-- RIGHT -->
-                    <td class="info-label">
-                        رقم الطلب
-                    </td>
-
-                    <td class="info-value number-value">
-                        ${orderNumber}
-                    </td>
-
                     <!-- LEFT -->
+                    <td class="info-value info-number">
+                        ${reportNumber}
+                    </td>
+
                     <td class="info-label">
                         رقم التقرير
                     </td>
 
-                    <td class="info-value number-value">
-                        ${reportNumber}
-                    </td>
-
-                </tr>
-
-
-                <tr>
-
                     <!-- RIGHT -->
-                    <td class="info-label">
-                        العميل
-                    </td>
-
                     <td class="info-value">
-                        ${customerName}
+                        ${serviceOption}
                     </td>
 
-                    <!-- LEFT -->
-                    <td class="info-label">
-                        رقم الجوال
-                    </td>
-
-                    <td class="info-value number-value">
-                        ${phone}
-                    </td>
-
-                </tr>
-
-
-                <tr>
-
-                    <!-- RIGHT -->
-                    <td class="info-label">
-                        السيارة
-                    </td>
-
-                    <td class="info-value">
-                        ${carModel}
-                    </td>
-
-                    <!-- LEFT -->
                     <td class="info-label">
                         نوع الخدمة
                     </td>
 
+                </tr>
+
+
+                <tr>
+
+                    <!-- LEFT -->
+                    <td class="info-value info-number">
+                        ${phone}
+                    </td>
+
+                    <td class="info-label">
+                        رقم الجوال
+                    </td>
+
+                    <!-- RIGHT -->
                     <td class="info-value">
-                        ${serviceOption}
+                        ${carModel}
+                    </td>
+
+                    <td class="info-label">
+                        السيارة
+                    </td>
+
+                </tr>
+
+
+                <tr>
+
+                    <!-- LEFT -->
+                    <td class="info-value info-number">
+                        ${orderNumber}
+                    </td>
+
+                    <td class="info-label">
+                        رقم الطلب
+                    </td>
+
+                    <!-- RIGHT -->
+                    <td class="info-value">
+                        ${customerName}
+                    </td>
+
+                    <td class="info-label">
+                        العميل
                     </td>
 
                 </tr>
@@ -726,31 +784,15 @@
             </div>
 
 
-            <table class="parts-table" dir="rtl">
+            <table class="parts-table">
 
                 <thead>
 
                 <tr>
 
-                    <!-- RIGHT -->
-                    <th class="col-idx">
-                        م
-                    </th>
-
-                    <th class="col-name">
-                        اسم القطعة
-                    </th>
-
-                    <th class="col-type">
-                        النوع
-                    </th>
-
-                    <th class="col-qty">
-                        الكمية
-                    </th>
-
-                    <th class="col-price">
-                        سعر القطعة
+                    <!-- LEFT -->
+                    <th class="col-total">
+                        الإجمالي
                         <br />
                         (ر.س)
                     </th>
@@ -761,11 +803,27 @@
                         (ر.س)
                     </th>
 
-                    <!-- LEFT -->
-                    <th class="col-total">
-                        الإجمالي
+                    <th class="col-price">
+                        سعر القطعة
                         <br />
                         (ر.س)
+                    </th>
+
+                    <th class="col-qty">
+                        الكمية
+                    </th>
+
+                    <th class="col-type">
+                        النوع
+                    </th>
+
+                    <th class="col-name">
+                        اسم القطعة
+                    </th>
+
+                    <!-- RIGHT -->
+                    <th class="col-idx">
+                        م
                     </th>
 
                 </tr>
@@ -803,83 +861,95 @@
             </div>
 
 
-            <table class="summary" dir="rtl">
+            <table class="summary">
 
                 <tr>
+
+                    <!-- LEFT -->
+                    <td class="summary-value">
+                        <span class="summary-money" dir="ltr">
+                            ${partsTotal} SAR
+                        </span>
+                    </td>
 
                     <!-- RIGHT -->
                     <td class="summary-label">
                         إجمالي القطع
                     </td>
 
-                    <!-- LEFT -->
-                    <td class="summary-value">
-                        ${partsTotal} SAR
-                    </td>
-
                 </tr>
 
 
                 <tr>
+
+                    <td class="summary-value">
+                        <span class="summary-money" dir="ltr">
+                            ${laborTotal} SAR
+                        </span>
+                    </td>
 
                     <td class="summary-label">
                         إجمالي أجور العمل
                     </td>
 
-                    <td class="summary-value">
-                        ${laborTotal} SAR
-                    </td>
-
                 </tr>
 
 
                 <tr>
+
+                    <td class="summary-value">
+                        <span class="summary-money" dir="ltr">
+                            ${subtotal} SAR
+                        </span>
+                    </td>
 
                     <td class="summary-label">
                         المجموع قبل الخصم
                     </td>
 
-                    <td class="summary-value">
-                        ${subtotal} SAR
-                    </td>
-
                 </tr>
 
 
                 <tr>
+
+                    <td class="summary-value discount">
+                        <span class="summary-money" dir="ltr">
+                            - ${discount} SAR
+                        </span>
+                    </td>
 
                     <td class="summary-label discount">
                         الخصم
                     </td>
 
-                    <td class="summary-value discount">
-                        - ${discount} SAR
-                    </td>
-
                 </tr>
 
 
                 <tr>
+
+                    <td class="summary-value">
+                        <span class="summary-money" dir="ltr">
+                            ${afterDiscount} SAR
+                        </span>
+                    </td>
 
                     <td class="summary-label">
                         المجموع بعد الخصم
                     </td>
 
-                    <td class="summary-value">
-                        ${afterDiscount} SAR
-                    </td>
-
                 </tr>
 
 
                 <tr>
 
-                    <td class="summary-label">
-                        ضريبة القيمة المضافة (15%)
+                    <td class="summary-value">
+                        <span class="summary-money" dir="ltr">
+                            ${vat} SAR
+                        </span>
                     </td>
 
-                    <td class="summary-value">
-                        ${vat} SAR
+                    <td class="summary-label">
+                        ضريبة القيمة المضافة (15%)
                     </td>
 
                 </tr>
@@ -887,14 +957,16 @@
 
                 <tr class="grand-total">
 
+                    <!-- LEFT -->
+                    <td class="summary-value">
+                        <span class="summary-money" dir="ltr">
+                            ${grandTotal} SAR
+                        </span>
+                    </td>
+
                     <!-- RIGHT -->
                     <td class="summary-label">
                         الإجمالي النهائي
-                    </td>
-
-                    <!-- LEFT -->
-                    <td class="summary-value">
-                        ${grandTotal} SAR
                     </td>
 
                 </tr>
