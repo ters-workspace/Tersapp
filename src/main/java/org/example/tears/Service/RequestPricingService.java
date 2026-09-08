@@ -591,60 +591,60 @@ public class RequestPricingService {
             // -------------------------
 
             rows.append("""
-        <tr>
+    <tr>
 
-            <td class="col-idx">
-                %d
-            </td>
+        <!-- LEFT : TOTAL -->
+        <td class="money-value">
+            <span dir="ltr">%s SAR</span>
+        </td>
 
-            <td class="part-name">
-                %s
-            </td>
+        <!-- LABOR -->
+        <td class="money-value">
+            <span dir="ltr">%s SAR</span>
+        </td>
 
-            <td class="part-type">
-                %s
-            </td>
+        <!-- PART PRICE -->
+        <td class="money-value">
+            <span dir="ltr">%s SAR</span>
+        </td>
 
-            <td>
-                %d
-            </td>
+        <!-- QUANTITY -->
+        <td class="part-number">
+            <span dir="ltr">%d</span>
+        </td>
 
-            <td class="money-value">
-                %s SAR
-            </td>
+        <!-- TYPE -->
+        <td class="part-type">
+            %s
+        </td>
 
-            <td class="money-value">
-                %s SAR
-            </td>
+        <!-- PART NAME -->
+        <td class="part-name">
+            %s
+        </td>
 
-            <td class="money-value">
-                %s SAR
-            </td>
+        <!-- RIGHT : INDEX -->
+        <td class="part-number">
+            <span dir="ltr">%d</span>
+        </td>
 
-        </tr>
-        """.formatted(
-
-                    index++,
-
-                    escapeHtml(
-                            part.getName() == null
-                                    ? "-"
-                                    : part.getName()
-                    ),
-
+    </tr>
+    """.formatted(
+                    formatMoney(total),
+                    formatMoney(labor),
+                    formatMoney(partPrice),
+                    quantity,
                     escapeHtml(
                             part.getType() == null
                                     ? "-"
                                     : part.getType()
                     ),
-
-                    quantity,
-
-                    formatMoney(partPrice),
-
-                    formatMoney(labor),
-
-                    formatMoney(total)
+                    escapeHtml(
+                            part.getName() == null
+                                    ? "-"
+                                    : part.getName()
+                    ),
+                    index++
             ));
         }
 

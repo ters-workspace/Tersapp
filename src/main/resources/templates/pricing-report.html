@@ -51,6 +51,9 @@
 
         /* =========================================
            HEADER
+
+           LOGO  = FAR LEFT
+           TITLE = FAR RIGHT
         ========================================= */
 
         .header {
@@ -61,14 +64,6 @@
             color: #ffffff;
             line-height: 1;
         }
-
-
-        /* =========================================
-           HEADER TABLE
-
-           TITLE = RIGHT
-           LOGO  = FAR LEFT
-        ========================================= */
 
         .header-table {
             width: 100%;
@@ -85,6 +80,32 @@
             padding: 0;
             vertical-align: middle;
         }
+
+
+        /* =========================================
+           HEADER LOGO
+           FIRST CELL = LEFT
+        ========================================= */
+
+        .header-logo-cell {
+            width: 30%;
+            text-align: left;
+            direction: ltr;
+        }
+
+        .logo {
+            width: 82px;
+            height: auto;
+            display: block;
+            margin: 0;
+            padding: 0;
+        }
+
+
+        /* =========================================
+           HEADER TITLE
+           SECOND CELL = RIGHT
+        ========================================= */
 
         .header-title-cell {
             width: 70%;
@@ -110,25 +131,6 @@
             direction: ltr;
             text-align: right;
             line-height: 1.2;
-        }
-
-
-        /* =========================================
-           HEADER LOGO
-        ========================================= */
-
-        .header-logo-cell {
-            width: 30%;
-            text-align: left;
-            direction: ltr;
-        }
-
-        .logo {
-            width: 82px;
-            height: auto;
-            display: block;
-            margin: 0;
-            padding: 0;
         }
 
 
@@ -213,16 +215,12 @@
         /* =========================================
            ORDER INFORMATION
 
-           PHYSICAL TABLE = LTR
-
-           Visual result:
-
            RIGHT:
-           label | value | label | value
+           LABEL | VALUE
 
            LEFT:
-           =========================================
-        */
+           LABEL | VALUE
+        ========================================= */
 
         .info-table {
             width: 100%;
@@ -261,7 +259,7 @@
 
         .info-number {
             direction: ltr !important;
-            text-align: left !important;
+            text-align: right !important;
             unicode-bidi: embed;
             white-space: nowrap;
         }
@@ -273,7 +271,7 @@
 
         .number-value {
             direction: ltr !important;
-            text-align: left !important;
+            text-align: right !important;
             unicode-bidi: embed;
             white-space: nowrap;
         }
@@ -282,10 +280,10 @@
         /* =========================================
            PARTS TABLE
 
-           IMPORTANT:
-           Physical HTML order is LTR.
+           PHYSICAL HTML ORDER = LTR
 
-           HTML:
+           LEFT -> RIGHT:
+
            الإجمالي
            أجرة العمل
            سعر القطعة
@@ -294,7 +292,7 @@
            اسم القطعة
            م
 
-           Visual PDF:
+           VISUAL PDF:
 
            م | اسم القطعة | النوع | الكمية |
            سعر القطعة | أجرة العمل | الإجمالي
@@ -407,13 +405,13 @@
 
 
         /* =========================================
-           MONEY
+           MONEY IN PARTS TABLE
 
-           Keep:
+           DISPLAY:
+           SAR 500.00
 
-           670.00 SAR
-
-           as one LTR unit.
+           SAR = LEFT
+           NUMBER = RIGHT
         ========================================= */
 
         .money-value {
@@ -433,18 +431,10 @@
         /* =========================================
            COST SUMMARY
 
-           Physical table = LTR
+           KEEP EXISTING POSITION
 
-           HTML order:
-
-           VALUE | LABEL
-
-           Visual result:
-
-           LABEL ---------------- VALUE
-
-           Arabic label = RIGHT
-           Number        = LEFT
+           LABEL = RIGHT
+           VALUE = LEFT
         ========================================= */
 
         .summary {
@@ -483,6 +473,17 @@
             unicode-bidi: embed;
             white-space: nowrap;
         }
+
+
+        /* =========================================
+           SUMMARY MONEY
+
+           DISPLAY:
+           SAR 500.00
+
+           SAR = LEFT
+           NUMBER = RIGHT
+        ========================================= */
 
         .summary-money {
             direction: ltr !important;
@@ -606,7 +607,19 @@
 
             <tr>
 
-                <!-- RIGHT : REPORT TITLE -->
+                <!-- FAR LEFT : LOGO -->
+
+                <td class="header-logo-cell">
+
+                    <img
+                            class="logo"
+                            src="data:image/png;base64,${logo}"
+                            alt="TERS Logo" />
+
+                </td>
+
+
+                <!-- FAR RIGHT : TITLE -->
 
                 <td class="header-title-cell">
 
@@ -617,18 +630,6 @@
                     <div class="title-en">
                         Pricing Report
                     </div>
-
-                </td>
-
-
-                <!-- FAR LEFT : LOGO -->
-
-                <td class="header-logo-cell">
-
-                    <img
-                            class="logo"
-                            src="data:image/png;base64,${logo}"
-                            alt="TERS Logo" />
 
                 </td>
 
@@ -865,14 +866,18 @@
 
                 <tr>
 
-                    <!-- LEFT -->
+                    <!-- LEFT : VALUE -->
+
                     <td class="summary-value">
+
                         <span class="summary-money" dir="ltr">
-                            ${partsTotal} SAR
+                            SAR ${partsTotal}
                         </span>
+
                     </td>
 
-                    <!-- RIGHT -->
+                    <!-- RIGHT : LABEL -->
+
                     <td class="summary-label">
                         إجمالي القطع
                     </td>
@@ -883,9 +888,11 @@
                 <tr>
 
                     <td class="summary-value">
+
                         <span class="summary-money" dir="ltr">
-                            ${laborTotal} SAR
+                            SAR ${laborTotal}
                         </span>
+
                     </td>
 
                     <td class="summary-label">
@@ -898,9 +905,11 @@
                 <tr>
 
                     <td class="summary-value">
+
                         <span class="summary-money" dir="ltr">
-                            ${subtotal} SAR
+                            SAR ${subtotal}
                         </span>
+
                     </td>
 
                     <td class="summary-label">
@@ -913,9 +922,11 @@
                 <tr>
 
                     <td class="summary-value discount">
+
                         <span class="summary-money" dir="ltr">
-                            - ${discount} SAR
+                            - SAR ${discount}
                         </span>
+
                     </td>
 
                     <td class="summary-label discount">
@@ -928,9 +939,11 @@
                 <tr>
 
                     <td class="summary-value">
+
                         <span class="summary-money" dir="ltr">
-                            ${afterDiscount} SAR
+                            SAR ${afterDiscount}
                         </span>
+
                     </td>
 
                     <td class="summary-label">
@@ -943,9 +956,11 @@
                 <tr>
 
                     <td class="summary-value">
+
                         <span class="summary-money" dir="ltr">
-                            ${vat} SAR
+                            SAR ${vat}
                         </span>
+
                     </td>
 
                     <td class="summary-label">
@@ -957,14 +972,18 @@
 
                 <tr class="grand-total">
 
-                    <!-- LEFT -->
+                    <!-- LEFT : VALUE -->
+
                     <td class="summary-value">
+
                         <span class="summary-money" dir="ltr">
-                            ${grandTotal} SAR
+                            SAR ${grandTotal}
                         </span>
+
                     </td>
 
-                    <!-- RIGHT -->
+                    <!-- RIGHT : LABEL -->
+
                     <td class="summary-label">
                         الإجمالي النهائي
                     </td>
