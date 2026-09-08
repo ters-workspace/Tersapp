@@ -1,11 +1,9 @@
 <!DOCTYPE html>
-
 <html lang="ar" dir="rtl"
       xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
 
-    ```
     <meta charset="UTF-8" />
 
     <style type="text/css">
@@ -57,45 +55,36 @@
 
         .header {
             width: 100%;
+            margin: 0;
+            padding: 16px 18mm;
             background: #1e2a4a;
-            padding: 12px 18mm;
             color: #ffffff;
-        }
-
-        /*
-           Using LTR here intentionally so:
-           First cell = LEFT
-           Second cell = RIGHT
-        */
-
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-            direction: ltr;
-        }
-
-        .header-table td {
-            vertical-align: middle;
+            line-height: 1;
         }
 
 
         /* =========================================
-           HEADER LOGO - LEFT
+           HEADER TABLE
+
+           RTL:
+           RIGHT = REPORT TITLE
+           LEFT  = LOGO
         ========================================= */
 
-        .header-logo-cell {
-            width: 35%;
-            text-align: left;
-            direction: ltr;
+        .header-table {
+            width: 100%;
+            margin: 0;
             padding: 0;
+            border-collapse: collapse;
+            border-spacing: 0;
+            table-layout: fixed;
+            direction: rtl;
         }
 
-        .logo {
-            width: 115px;
-            height: auto;
-            display: block;
+        .header-table td {
             margin: 0;
+            padding: 0;
+            vertical-align: middle;
         }
 
 
@@ -104,35 +93,48 @@
         ========================================= */
 
         .header-title-cell {
-            width: 65%;
+            width: 70%;
             text-align: right;
             direction: rtl;
-            padding: 0;
         }
 
         .title-ar {
             margin: 0;
             padding: 0;
-
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 700;
             line-height: 1.3;
-
             text-align: right;
             direction: rtl;
         }
 
         .title-en {
-            margin-top: 2px;
+            margin: 3px 0 0 0;
             padding: 0;
-
             font-size: 10px;
-            font-weight: 400;
-
             color: #d8deed;
-
             direction: ltr;
             text-align: right;
+            line-height: 1.2;
+        }
+
+
+        /* =========================================
+           HEADER LOGO - LEFT
+        ========================================= */
+
+        .header-logo-cell {
+            width: 30%;
+            text-align: left;
+            direction: ltr;
+        }
+
+        .logo {
+            width: 82px;
+            height: auto;
+            display: block;
+            margin: 0;
+            padding: 0;
         }
 
 
@@ -165,57 +167,40 @@
         /* =========================================
            SECTION TITLE
 
-           RIGHT:
-           Arabic
-
-           NEXT TO IT:
-           English
+           Arabic = RIGHT
+           English = NEXT TO IT
         ========================================= */
 
         .section-title {
             width: 100%;
-
             direction: rtl;
             text-align: right;
-
             border-bottom: 2px solid #f5453d;
-
             padding-bottom: 5px;
             margin-bottom: 9px;
-
             white-space: nowrap;
         }
 
         .section-title-ar {
             display: inline-block;
-
             direction: rtl;
-
             font-size: 13px;
             font-weight: 700;
-
             color: #1e2a4a;
-
             margin: 0;
             padding: 0;
-
-            vertical-align: baseline;
+            text-align: right;
         }
 
         .section-title-en {
             display: inline-block;
-
             direction: ltr;
-
             font-size: 9px;
             font-weight: 400;
-
             color: #7b8496;
-
             margin: 0 5px 0 0;
             padding: 0;
-
-            vertical-align: baseline;
+            text-align: right;
         }
 
 
@@ -225,16 +210,11 @@
 
         .problem-box {
             width: 100%;
-
             background: #f4f6f9;
-
             border: 1px solid #d9dde5;
-
             padding: 10px 12px;
-
             direction: rtl;
             text-align: right;
-
             min-height: 0;
         }
 
@@ -245,46 +225,31 @@
 
         .info-table {
             width: 100%;
-
             border-collapse: collapse;
-
             table-layout: fixed;
-
             direction: rtl;
         }
 
         .info-table td {
             border: 1px solid #d9dde5;
-
             padding: 9px 10px;
-
             vertical-align: middle;
-
             text-align: right;
         }
 
         .info-label {
             width: 17%;
-
             background: #eef1f6;
-
             color: #596273;
-
-            font-size: 10px;
             font-weight: 700;
-
             direction: rtl;
             text-align: right;
         }
 
         .info-value {
             width: 33%;
-
             color: #1f2430;
-
-            font-size: 10px;
             font-weight: 400;
-
             direction: rtl;
             text-align: right;
         }
@@ -306,41 +271,27 @@
 
         .parts-table {
             width: 100%;
-
             border-collapse: collapse;
-
             table-layout: fixed;
-
             direction: rtl;
-
             font-size: 9px;
         }
 
         .parts-table th {
             background: #1e2a4a;
-
             color: #ffffff;
-
             border: 1px solid #1e2a4a;
-
             padding: 8px 4px;
-
             font-weight: 700;
-
             text-align: center;
-
             vertical-align: middle;
         }
 
         .parts-table td {
             border: 1px solid #d9dde5;
-
             padding: 7px 4px;
-
             text-align: center;
-
             vertical-align: middle;
-
             word-wrap: break-word;
         }
 
@@ -384,11 +335,13 @@
 
         /* =========================================
            PART NAME / TYPE
+
+           CENTER AS REQUESTED
         ========================================= */
 
         .parts-table td.part-name,
         .parts-table td.part-type {
-            text-align: right;
+            text-align: center;
             direction: rtl;
         }
 
@@ -409,62 +362,31 @@
 
         .summary {
             width: 100%;
-
             border-collapse: collapse;
-
             table-layout: fixed;
-
             direction: rtl;
-
-            font-size: 10px;
         }
 
         .summary td {
-            padding: 9px 11px;
-
+            padding: 8px 11px;
             border-bottom: 1px solid #d9dde5;
-
             vertical-align: middle;
         }
 
-        /*
-           First TD in RTL table appears on the RIGHT.
-           Therefore:
-           summary-label = RIGHT
-        */
-
         .summary-label {
             width: 70%;
-
             color: #596273;
-
             font-weight: 700;
-
             text-align: right;
-
             direction: rtl;
-
-            font-size: 10px;
         }
-
-        /*
-           Second TD appears on the LEFT.
-           Therefore:
-           summary-value = LEFT
-        */
 
         .summary-value {
             width: 30%;
-
             color: #1f2430;
-
             font-weight: 700;
-
             text-align: left;
-
             direction: ltr;
-
-            font-size: 10px;
         }
 
 
@@ -483,14 +405,10 @@
 
         .grand-total td {
             background: #1e2a4a;
-
             color: #ffffff !important;
-
             border-bottom: none;
-
             padding: 11px 12px;
-
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 700;
         }
 
@@ -501,16 +419,11 @@
 
         .notes-box {
             width: 100%;
-
             background: #f4f6f9;
-
             border: 1px solid #d9dde5;
-
             padding: 11px 12px;
-
             direction: rtl;
             text-align: right;
-
             min-height: 0;
         }
 
@@ -521,9 +434,7 @@
 
         .empty-row td {
             padding: 15px;
-
             text-align: center;
-
             color: #7b8496;
         }
 
@@ -534,31 +445,22 @@
 
         .footer {
             width: 100%;
-
             margin-top: 5px;
-
             padding: 10px 12mm;
-
             border-top: 1px solid #d9dde5;
-
             color: #7b8496;
-
             font-size: 8px;
         }
 
         .footer-table {
             width: 100%;
-
             border-collapse: collapse;
-
             table-layout: fixed;
-
             direction: ltr;
         }
 
         .footer-table td {
             width: 50%;
-
             vertical-align: middle;
         }
 
@@ -583,15 +485,15 @@
         }
 
     </style>
-    ```
 
 </head>
+
 
 <body dir="rtl">
 
 <div class="page">
 
-    ```
+
     <!-- =========================================
          HEADER
     ========================================= -->
@@ -601,18 +503,6 @@
         <table class="header-table">
 
             <tr>
-
-                <!-- LEFT : LOGO -->
-
-                <td class="header-logo-cell">
-
-                    <img
-                            class="logo"
-                            src="data:image/png;base64,${logo}"
-                            alt="TERS Logo" />
-
-                </td>
-
 
                 <!-- RIGHT : REPORT TITLE -->
 
@@ -625,6 +515,18 @@
                     <div class="title-en">
                         Pricing Report
                     </div>
+
+                </td>
+
+
+                <!-- LEFT : LOGO -->
+
+                <td class="header-logo-cell">
+
+                    <img
+                            class="logo"
+                            src="data:image/png;base64,${logo}"
+                            alt="TERS Logo" />
 
                 </td>
 
@@ -650,13 +552,13 @@
 
             <div class="section-title">
 
-            <span class="section-title-ar">
-                وصف المشكلة
-            </span>
+                <span class="section-title-ar">
+                    وصف المشكلة
+                </span>
 
                 <span class="section-title-en">
-                Problem Description
-            </span>
+                    Problem Description
+                </span>
 
             </div>
 
@@ -676,18 +578,19 @@
 
             <div class="section-title">
 
-            <span class="section-title-ar">
-                بيانات الطلب
-            </span>
+                <span class="section-title-ar">
+                    بيانات الطلب
+                </span>
 
                 <span class="section-title-en">
-                Order Information
-            </span>
+                    Order Information
+                </span>
 
             </div>
 
 
-            <table class="info-table" dir="rtl">
+            <table class="info-table"
+                   dir="rtl">
 
                 <tr>
 
@@ -764,18 +667,19 @@
 
             <div class="section-title">
 
-            <span class="section-title-ar">
-                القطع وأجور العمل
-            </span>
+                <span class="section-title-ar">
+                    القطع وأجور العمل
+                </span>
 
                 <span class="section-title-en">
-                Parts and Labor
-            </span>
+                    Parts and Labor
+                </span>
 
             </div>
 
 
-            <table class="parts-table" dir="rtl">
+            <table class="parts-table"
+                   dir="rtl">
 
                 <thead>
 
@@ -839,18 +743,19 @@
 
             <div class="section-title">
 
-            <span class="section-title-ar">
-                ملخص التكلفة
-            </span>
+                <span class="section-title-ar">
+                    ملخص التكلفة
+                </span>
 
                 <span class="section-title-en">
-                Cost Summary
-            </span>
+                    Cost Summary
+                </span>
 
             </div>
 
 
-            <table class="summary" dir="rtl">
+            <table class="summary"
+                   dir="rtl">
 
                 <tr>
 
@@ -967,14 +872,9 @@
 
             <tr>
 
-                <!-- LEFT : ENGLISH -->
-
                 <td class="footer-left">
                     TERS – Maintenance Management System
                 </td>
-
-
-                <!-- RIGHT : ARABIC -->
 
                 <td class="footer-right">
                     ترس – نظام إدارة الصيانة
@@ -985,7 +885,7 @@
         </table>
 
     </div>
-    ```
+
 
 </div>
 
