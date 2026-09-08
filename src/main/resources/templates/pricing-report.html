@@ -3,7 +3,6 @@
       xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
-
     <meta charset="UTF-8" />
 
     <style type="text/css">
@@ -51,7 +50,6 @@
 
         /* =========================================
            HEADER
-
            LOGO  = FAR LEFT
            TITLE = FAR RIGHT
         ========================================= */
@@ -214,10 +212,8 @@
 
         /* =========================================
            ORDER INFORMATION
-
            RIGHT:
            LABEL | VALUE
-
            LEFT:
            LABEL | VALUE
         ========================================= */
@@ -228,6 +224,7 @@
             border-spacing: 0;
             table-layout: fixed;
             direction: ltr;
+            font-size: 10px;
         }
 
         .info-table tr {
@@ -236,7 +233,7 @@
 
         .info-table td {
             border: 1px solid #d9dde5;
-            padding: 9px 10px;
+            padding: 11px 10px;
             vertical-align: middle;
         }
 
@@ -283,7 +280,6 @@
            PHYSICAL HTML ORDER = LTR
 
            LEFT -> RIGHT:
-
            الإجمالي
            أجرة العمل
            سعر القطعة
@@ -293,7 +289,6 @@
            م
 
            VISUAL PDF:
-
            م | اسم القطعة | النوع | الكمية |
            سعر القطعة | أجرة العمل | الإجمالي
         ========================================= */
@@ -304,7 +299,7 @@
             border-spacing: 0;
             table-layout: fixed;
             direction: ltr;
-            font-size: 9px;
+            font-size: 10px;
         }
 
         .parts-table thead {
@@ -323,7 +318,7 @@
             background: #1e2a4a;
             color: #ffffff;
             border: 1px solid #1e2a4a;
-            padding: 8px 4px;
+            padding: 9px 4px;
             font-weight: 700;
             text-align: center;
             vertical-align: middle;
@@ -332,7 +327,7 @@
 
         .parts-table td {
             border: 1px solid #d9dde5;
-            padding: 7px 4px;
+            padding: 9px 4px;
             text-align: center;
             vertical-align: middle;
             word-wrap: break-word;
@@ -431,8 +426,6 @@
         /* =========================================
            COST SUMMARY
 
-           KEEP EXISTING POSITION
-
            LABEL = RIGHT
            VALUE = LEFT
         ========================================= */
@@ -450,7 +443,7 @@
         }
 
         .summary td {
-            padding: 8px 11px;
+            padding: 10px 11px;
             border-bottom: 1px solid #d9dde5;
             vertical-align: middle;
         }
@@ -510,7 +503,7 @@
             background: #1e2a4a;
             color: #ffffff !important;
             border-bottom: none;
-            padding: 11px 12px;
+            padding: 12px 12px;
             font-size: 14px;
             font-weight: 700;
         }
@@ -588,7 +581,6 @@
         }
 
     </style>
-
 </head>
 
 
@@ -696,6 +688,7 @@
                 <tr>
 
                     <!-- LEFT -->
+
                     <td class="info-value info-number">
                         ${reportNumber}
                     </td>
@@ -704,7 +697,9 @@
                         رقم التقرير
                     </td>
 
+
                     <!-- RIGHT -->
+
                     <td class="info-value">
                         ${serviceOption}
                     </td>
@@ -719,6 +714,7 @@
                 <tr>
 
                     <!-- LEFT -->
+
                     <td class="info-value info-number">
                         ${phone}
                     </td>
@@ -727,7 +723,9 @@
                         رقم الجوال
                     </td>
 
+
                     <!-- RIGHT -->
+
                     <td class="info-value">
                         ${carModel}
                     </td>
@@ -742,6 +740,7 @@
                 <tr>
 
                     <!-- LEFT -->
+
                     <td class="info-value info-number">
                         ${orderNumber}
                     </td>
@@ -750,7 +749,9 @@
                         رقم الطلب
                     </td>
 
+
                     <!-- RIGHT -->
+
                     <td class="info-value">
                         ${customerName}
                     </td>
@@ -792,6 +793,7 @@
                 <tr>
 
                     <!-- LEFT -->
+
                     <th class="col-total">
                         الإجمالي
                         <br />
@@ -823,6 +825,7 @@
                     </th>
 
                     <!-- RIGHT -->
+
                     <th class="col-idx">
                         م
                     </th>
@@ -875,6 +878,7 @@
                         </span>
 
                     </td>
+
 
                     <!-- RIGHT : LABEL -->
 
@@ -982,6 +986,7 @@
 
                     </td>
 
+
                     <!-- RIGHT : LABEL -->
 
                     <td class="summary-label">
@@ -1000,7 +1005,6 @@
         ========================================= -->
 
         ${technicianNotesSection}
-
 
     </div>
 
@@ -1028,7 +1032,6 @@
         </table>
 
     </div>
-
 
 </div>
 
