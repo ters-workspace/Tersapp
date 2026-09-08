@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl"
       xmlns="http://www.w3.org/1999/xhtml">
@@ -66,9 +67,8 @@
         /* =========================================
            HEADER TABLE
 
-           RTL:
-           RIGHT = REPORT TITLE
-           LEFT  = LOGO
+           TITLE = RIGHT
+           LOGO  = FAR LEFT
         ========================================= */
 
         .header-table {
@@ -78,7 +78,7 @@
             border-collapse: collapse;
             border-spacing: 0;
             table-layout: fixed;
-            direction: rtl;
+            direction: ltr;
         }
 
         .header-table td {
@@ -120,7 +120,7 @@
 
 
         /* =========================================
-           HEADER LOGO - LEFT
+           HEADER LOGO - FAR LEFT
         ========================================= */
 
         .header-logo-cell {
@@ -166,9 +166,6 @@
 
         /* =========================================
            SECTION TITLE
-
-           Arabic = RIGHT
-           English = NEXT TO IT
         ========================================= */
 
         .section-title {
@@ -226,7 +223,12 @@
         .info-table {
             width: 100%;
             border-collapse: collapse;
+            border-spacing: 0;
             table-layout: fixed;
+            direction: rtl;
+        }
+
+        .info-table tr {
             direction: rtl;
         }
 
@@ -235,6 +237,7 @@
             padding: 9px 10px;
             vertical-align: middle;
             text-align: right;
+            direction: rtl;
         }
 
         .info-label {
@@ -260,21 +263,43 @@
         ========================================= */
 
         .number-value {
-            direction: ltr;
-            text-align: right;
+            direction: ltr !important;
+            text-align: right !important;
         }
 
 
         /* =========================================
            PARTS TABLE
+           
+           RTL ORDER:
+           م
+           اسم القطعة
+           النوع
+           الكمية
+           سعر القطعة
+           أجرة العمل
+           الإجمالي
         ========================================= */
 
         .parts-table {
             width: 100%;
             border-collapse: collapse;
+            border-spacing: 0;
             table-layout: fixed;
             direction: rtl;
             font-size: 9px;
+        }
+
+        .parts-table thead {
+            direction: rtl;
+        }
+
+        .parts-table tbody {
+            direction: rtl;
+        }
+
+        .parts-table tr {
+            direction: rtl;
         }
 
         .parts-table th {
@@ -285,6 +310,7 @@
             font-weight: 700;
             text-align: center;
             vertical-align: middle;
+            direction: rtl;
         }
 
         .parts-table td {
@@ -293,6 +319,7 @@
             text-align: center;
             vertical-align: middle;
             word-wrap: break-word;
+            direction: rtl;
         }
 
         .parts-table tbody tr:nth-child(even) {
@@ -302,6 +329,17 @@
 
         /* =========================================
            PARTS COLUMNS
+           
+           RTL:
+           RIGHT --------------------> LEFT
+
+           م
+           اسم القطعة
+           النوع
+           الكمية
+           سعر القطعة
+           أجرة العمل
+           الإجمالي
         ========================================= */
 
         .col-idx {
@@ -335,8 +373,6 @@
 
         /* =========================================
            PART NAME / TYPE
-
-           CENTER AS REQUESTED
         ========================================= */
 
         .parts-table td.part-name,
@@ -358,12 +394,20 @@
 
         /* =========================================
            SUMMARY
+           
+           RIGHT = LABEL
+           LEFT  = VALUE
         ========================================= */
 
         .summary {
             width: 100%;
             border-collapse: collapse;
+            border-spacing: 0;
             table-layout: fixed;
+            direction: rtl;
+        }
+
+        .summary tr {
             direction: rtl;
         }
 
@@ -519,7 +563,7 @@
                 </td>
 
 
-                <!-- LEFT : LOGO -->
+                <!-- FAR LEFT : LOGO -->
 
                 <td class="header-logo-cell">
 
@@ -589,11 +633,11 @@
             </div>
 
 
-            <table class="info-table"
-                   dir="rtl">
+            <table class="info-table" dir="rtl">
 
                 <tr>
 
+                    <!-- RIGHT -->
                     <td class="info-label">
                         رقم الطلب
                     </td>
@@ -602,6 +646,7 @@
                         ${orderNumber}
                     </td>
 
+                    <!-- LEFT -->
                     <td class="info-label">
                         رقم التقرير
                     </td>
@@ -615,6 +660,7 @@
 
                 <tr>
 
+                    <!-- RIGHT -->
                     <td class="info-label">
                         العميل
                     </td>
@@ -623,6 +669,7 @@
                         ${customerName}
                     </td>
 
+                    <!-- LEFT -->
                     <td class="info-label">
                         رقم الجوال
                     </td>
@@ -636,6 +683,7 @@
 
                 <tr>
 
+                    <!-- RIGHT -->
                     <td class="info-label">
                         السيارة
                     </td>
@@ -644,6 +692,7 @@
                         ${carModel}
                     </td>
 
+                    <!-- LEFT -->
                     <td class="info-label">
                         نوع الخدمة
                     </td>
@@ -678,13 +727,13 @@
             </div>
 
 
-            <table class="parts-table"
-                   dir="rtl">
+            <table class="parts-table" dir="rtl">
 
                 <thead>
 
                 <tr>
 
+                    <!-- RIGHT -->
                     <th class="col-idx">
                         م
                     </th>
@@ -713,6 +762,7 @@
                         (ر.س)
                     </th>
 
+                    <!-- LEFT -->
                     <th class="col-total">
                         الإجمالي
                         <br />
@@ -754,15 +804,16 @@
             </div>
 
 
-            <table class="summary"
-                   dir="rtl">
+            <table class="summary" dir="rtl">
 
                 <tr>
 
+                    <!-- RIGHT -->
                     <td class="summary-label">
                         إجمالي القطع
                     </td>
 
+                    <!-- LEFT -->
                     <td class="summary-value">
                         ${partsTotal} SAR
                     </td>
@@ -837,10 +888,12 @@
 
                 <tr class="grand-total">
 
+                    <!-- RIGHT -->
                     <td class="summary-label">
                         الإجمالي النهائي
                     </td>
 
+                    <!-- LEFT -->
                     <td class="summary-value">
                         ${grandTotal} SAR
                     </td>
@@ -892,3 +945,4 @@
 </body>
 
 </html>
+```
