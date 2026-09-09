@@ -6,7 +6,6 @@ import lombok.*;
 import org.example.tears.Enums.UserRole;
 import org.example.tears.Enums.UserStatus;
 
-import java.time.LocalDate;
 
 @Data
 @Getter

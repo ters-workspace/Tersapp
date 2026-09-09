@@ -189,12 +189,13 @@ public class AuthService {
     public ApiResponse loginEmployee(LoginDTO dto) {
 
         User user = userRepo
-                .findByEmail(
-                        dto.getEmail())
+                .findByEmailOrPhoneNumber(
+                        dto.getEmailOrPhone(),
+                        dto.getEmailOrPhone()
+                )
                 .orElseThrow(() ->
                         new ApiException("بيانات الدخول غير صحيحة")
                 );
-
 
         System.out.println("PASSWORD MATCH = "
                 + encoder.matches(
@@ -202,11 +203,8 @@ public class AuthService {
                 user.getPassword()
         ));
 
-        if (
-                user.getRole() != UserRole.EMPLOYEE
-                        &&
-                        user.getRole() != UserRole.ADMIN
-        ) {
+        if (user.getRole() != UserRole.EMPLOYEE
+                && user.getRole() != UserRole.ADMIN) {
             throw new ApiException("غير مصرح");
         }
 
@@ -229,6 +227,7 @@ public class AuthService {
                 "OTP sent successfully"
         );
     }
+
 
     // =========================================================
     // 6️⃣ استعاده كلمة المرور

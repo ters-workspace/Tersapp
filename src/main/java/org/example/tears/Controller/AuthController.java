@@ -3,18 +3,14 @@ package org.example.tears.Controller;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.tears.Api.ApiException;
 import org.example.tears.Api.ApiResponse;
 import org.example.tears.DTO.*;
 import org.example.tears.InpDTO.ChangePasswordDTO;
 import org.example.tears.InpDTO.CustomerRegisterDTO;
 import org.example.tears.InpDTO.LoginDTO;
-import org.example.tears.Model.JwtUtil;
 import org.example.tears.Model.User;
 import org.example.tears.Service.AuthService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;

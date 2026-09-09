@@ -11,9 +11,5 @@ import java.util.List;
 public interface CarRepository extends JpaRepository<Car,Integer> {
 
     List<Car> findByCustomerId(Integer customerId);
-    boolean existsByPlateNumberArabic(String plateNumberArabic);
-    List<Car> findByCustomerIdAndDeletedFalse(Integer userId);
-    boolean existsByPlateNumberArabicAndIdNot(String plateNumberArabic, Integer id);
-    boolean existsByPlateNumberEnglishAndIdNot(String plateNumberEnglish, Integer id);
     void deleteAllByCustomerId(Integer customerId);
 }
