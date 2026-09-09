@@ -189,10 +189,7 @@ public class AuthService {
     public ApiResponse loginEmployee(LoginDTO dto) {
 
         User user = userRepo
-                .findByEmailOrPhoneNumber(
-                        dto.getEmailOrPhone(),
-                        dto.getEmailOrPhone()
-                )
+                .findByEmail(dto.getEmail())
                 .orElseThrow(() ->
                         new ApiException("بيانات الدخول غير صحيحة")
                 );
