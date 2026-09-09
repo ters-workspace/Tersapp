@@ -3,6 +3,7 @@ package org.example.tears.Controller;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.tears.Api.ApiException;
 import org.example.tears.Api.ApiResponse;
 import org.example.tears.DTO.*;
 import org.example.tears.InpDTO.ChangePasswordDTO;
@@ -24,7 +25,6 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-    private final JwtUtil jwtUtil;
 
 
     // ================= Customer =================
@@ -48,21 +48,15 @@ public class AuthController {
     public ApiResponse resendCustomerOtp(@RequestBody PhoneNumberDTO dto) {
         return authService.resendCustomerOtp(dto.getPhoneNumber());
     }
+
     @PostMapping("/dev/admin-token")
     public ResponseEntity<?> adminToken() {
 
-        String token = jwtUtil.generateToken(
-                "+966500000009",
-                "ADMIN"
-        );
-
         return ResponseEntity.ok(
-                Map.of(
-                        "token",
-                        token
-                )
+                authService.generateDevAdminTokens()
         );
     }
+
     // ================= General Login =================
 
     // تسجيل دخول عميل
@@ -144,13 +138,13 @@ public class AuthController {
     }
 
     @PostMapping("/employee/verify")
-    public ResponseEntity<?> verifyEmployeeOtp(
+    public ResponseEntity<TokenResponseDto> verifyEmployeeOtp(
             @RequestBody VerifyEmployeeOtpDTO dto
     ) {
 
         return ResponseEntity.ok(
                 authService.verifyEmployeeOtp(
-                        dto.getEmailOrPhone(),
+                        dto.getEmail(),
                         dto.getOtp()
                 )
         );
@@ -166,5 +160,31 @@ public class AuthController {
     public ApiResponse deleteByPhone(@PathVariable String phone) {
         authService.deleteByPhone(phone);
         return new ApiResponse(true,"Deleted");
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenResponseDto> refreshToken(
+            @RequestBody RefreshTokenRequestDto dto
+    ) {
+
+        return ResponseEntity.ok(
+
+                authService.refreshToken(
+                        dto.getRefreshToken()
+                )
+        );
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @RequestBody RefreshTokenRequestDto dto
+    ) {
+
+        authService.logout(
+                dto.getRefreshToken()
+        );
+
+        return ResponseEntity.noContent()
+                .build();
     }
 }

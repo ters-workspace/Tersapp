@@ -13,13 +13,10 @@ import org.example.tears.InpDTO.CustomerRegisterDTO;
 import org.example.tears.InpDTO.LoginDTO;
 import org.example.tears.Model.*;
 import org.example.tears.OutDTO.AuthStatusDto;
-import org.example.tears.Repository.EmployeeRepository;
-import org.example.tears.Repository.PasswordResetTokenRepository;
-import org.example.tears.Repository.UserRepository;
+import org.example.tears.Repository.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.example.tears.Model.Wallet;
-import org.example.tears.Repository.WalletRepository;
 
 import java.time.LocalDateTime;
 
@@ -34,6 +31,7 @@ public class AuthService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
    // private final TwilioConfig twilioConfig;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final EmployeeRepository employeeRepo;
     private final WalletRepository walletRepository;
 
@@ -91,16 +89,22 @@ public class AuthService {
     // =========================================================
     // 2️⃣ التحقق من OTP
     // =========================================================
-    public ApiResponse verifyCustomerOtp(String phoneNumber, String otp) {
 
-        User user = userRepo.findByPhoneNumber(phoneNumber)
-                .orElseThrow(() -> new ApiException("User not found"));
+    public ApiResponse verifyCustomerOtp(
+            String phoneNumber,
+            String otp
+    ) {
 
-        // ================= DEV =================
-        if (!otp.equals("123456"))
+        User user =
+                userRepo.findByPhoneNumber(phoneNumber)
+                        .orElseThrow(() ->
+                                new ApiException("User not found")
+                        );
+
+        if (!otp.equals("123456")) {
             throw new ApiException("Invalid OTP");
-
-        // ================= PRODUCTION =================
+        }
+// ================= PRODUCTION =================
         // VerificationCheck check = VerificationCheck.creator(twilioConfig.getServiceSid())
         //        .setTo(phoneNumber)
         //        .setCode(otp)
@@ -112,9 +116,14 @@ public class AuthService {
         user.setStatus(UserStatus.ACTIVE);
         userRepo.save(user);
 
-        String token = jwtUtil.generateToken(user.getPhoneNumber(), user.getRole().name());
+        TokenResponseDto tokens =
+                generateTokens(user);
 
-        return new ApiResponse(true, "User verified successfully", token);
+        return new ApiResponse(
+                true,
+                "User verified successfully",
+                tokens
+        );
     }
 
     // =========================================================
@@ -344,46 +353,27 @@ public class AuthService {
         userRepo.save(user);
     }
 
-    public ApiResponse verifyEmployeeOtp(
-            String emailOrPhone,
+    public TokenResponseDto verifyEmployeeOtp(
+            String email,
             String otp
     ) {
 
         User user =
-                userRepo
-                        .findByEmailOrPhoneNumber(
-                                emailOrPhone,
-                                emailOrPhone
-                        )
+                userRepo.findByEmail(email)
                         .orElseThrow(() ->
-                                new ApiException(
-                                        "User not found"
-                                )
+                                new ApiException("User not found")
                         );
 
         if (!otp.equals("123456")) {
-            throw new ApiException(
-                    "Invalid OTP"
-            );
+            throw new ApiException("Invalid OTP");
         }
 
-        user.setStatus(
-                UserStatus.ACTIVE
-        );
-
+        user.setStatus(UserStatus.ACTIVE);
         userRepo.save(user);
 
-        String token =
-                jwtUtil.generateToken(
-                        user.getPhoneNumber(),
-                        user.getRole().name()
-                );
-
-        return new ApiResponse(
-                true,
-                token
-        );
+        return generateTokens(user);
     }
+
 
     // =========================================================
     // 8️⃣ جلب المستخدم من التوكن
@@ -501,5 +491,213 @@ public class AuthService {
         admin.setStatus(UserStatus.ACTIVE);
 
         userRepo.save(admin);
+    }
+
+    @Transactional
+    public TokenResponseDto generateTokens(
+            User user
+    ) {
+
+        // =========================
+        // ACCESS TOKEN
+        // =========================
+
+        String accessToken =
+                jwtUtil.generateAccessToken(
+
+                        user.getPhoneNumber(),
+
+                        user.getRole().name()
+                );
+
+
+        // =========================
+        // REFRESH TOKEN
+        // =========================
+
+        String refreshToken =
+                jwtUtil.generateRefreshToken(
+                        user.getPhoneNumber()
+                );
+
+
+        // =========================
+        // SAVE REFRESH TOKEN
+        // =========================
+
+        RefreshToken token =
+                new RefreshToken();
+
+        token.setUser(user);
+
+        token.setToken(
+                refreshToken
+        );
+
+        token.setExpiresAt(
+                LocalDateTime.now()
+                        .plusSeconds(
+                                jwtUtil.getRefreshExpirationSeconds()
+                        )
+        );
+
+        token.setRevoked(false);
+
+        token.setCreatedAt(
+                LocalDateTime.now()
+        );
+
+        refreshTokenRepository.save(token);
+
+
+        return new TokenResponseDto(
+
+                accessToken,
+
+                refreshToken,
+
+                jwtUtil.getAccessExpirationSeconds(),
+
+                jwtUtil.getRefreshExpirationSeconds(),
+
+                "Bearer"
+        );
+    }
+
+    @Transactional
+    public TokenResponseDto refreshToken(
+            String refreshToken
+    ) {
+
+        RefreshToken storedToken =
+                refreshTokenRepository
+                        .findByToken(refreshToken)
+                        .orElseThrow(() ->
+                                new ApiException(
+                                        "REFRESH_TOKEN_INVALID",
+                                        401
+                                )
+                        );
+
+
+        // =========================
+        // REVOKED
+        // =========================
+
+        if (Boolean.TRUE.equals(
+                storedToken.getRevoked()
+        )) {
+
+            throw new ApiException(
+                    "REFRESH_TOKEN_INVALID",
+                    401
+            );
+        }
+
+
+        // =========================
+        // DB EXPIRATION
+        // =========================
+
+        if (storedToken.getExpiresAt()
+                .isBefore(LocalDateTime.now())) {
+
+            storedToken.setRevoked(true);
+
+            refreshTokenRepository.save(
+                    storedToken
+            );
+
+            throw new ApiException(
+                    "REFRESH_TOKEN_INVALID",
+                    401
+            );
+        }
+
+
+        // =========================
+        // JWT VALIDATION
+        // =========================
+
+        try {
+
+            String tokenType =
+                    jwtUtil.getTokenType(
+                            refreshToken
+                    );
+
+            if (!"REFRESH".equals(
+                    tokenType
+            )) {
+
+                throw new ApiException(
+                        "REFRESH_TOKEN_INVALID",
+                        401
+                );
+            }
+
+        } catch (ApiException e) {
+
+            throw e;
+
+        } catch (Exception e) {
+
+            throw new ApiException(
+                    "REFRESH_TOKEN_INVALID",
+                    401
+            );
+        }
+
+
+        User user =
+                storedToken.getUser();
+
+
+        // =========================
+        // ROTATION
+        // =========================
+
+        storedToken.setRevoked(true);
+
+        refreshTokenRepository.save(
+                storedToken
+        );
+
+
+        return generateTokens(
+                user
+        );
+    }
+
+    @Transactional
+    public void logout(
+            String refreshToken
+    ) {
+
+        refreshTokenRepository
+                .findByToken(refreshToken)
+                .ifPresent(token -> {
+
+                    token.setRevoked(true);
+
+                    refreshTokenRepository.save(
+                            token
+                    );
+                });
+    }
+
+    public TokenResponseDto generateDevAdminTokens() {
+
+        User admin =
+                userRepo.findByPhoneNumber("+966500000009")
+                        .orElseThrow(() ->
+                                new ApiException("Admin not found")
+                        );
+
+        if (admin.getRole() != UserRole.ADMIN) {
+            throw new ApiException("User is not ADMIN");
+        }
+
+        return generateTokens(admin);
     }
 }

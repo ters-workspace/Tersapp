@@ -99,8 +99,8 @@
       "id": "7",
       "title": "Contact",
       "items": [
-        { "text": "Email:", "type": "bullet" },
-        { "text": "Customer service number:", "type": "bullet" }
+        { "text": "Email:support@ters.app", "type": "bullet" },
+        { "text": "Customer service number:0550305984", "type": "bullet" }
       ]
     }
   ]

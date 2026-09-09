@@ -5,7 +5,6 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.example.tears.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -17,56 +16,175 @@ import java.util.Date;
 public class JwtUtil {
 
     private final SecretKey key;
-    private final long expirationMillis;
-    private final UserRepository userRepository;
+
+    private final long accessExpirationMillis;
+
+    private final long refreshExpirationMillis;
 
     public JwtUtil(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration}") long expirationMillis,
-            UserRepository userRepository) {
+            @Value("${jwt.secret}")
+            String secret,
 
-        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.expirationMillis = expirationMillis;
-        this.userRepository = userRepository;
+            @Value("${jwt.access-expiration}")
+            long accessExpirationMillis,
+
+            @Value("${jwt.refresh-expiration}")
+            long refreshExpirationMillis
+    ) {
+
+        this.key =
+                Keys.hmacShaKeyFor(
+                        secret.getBytes(
+                                StandardCharsets.UTF_8
+                        )
+                );
+
+        this.accessExpirationMillis =
+                accessExpirationMillis;
+
+        this.refreshExpirationMillis =
+                refreshExpirationMillis;
     }
 
-    public String extractUsername(String token){
-        return getPhoneFromToken(token);
-    }
+    // =========================
+    // ACCESS TOKEN
+    // =========================
 
-    // ================= TOKEN GENERATION =================
-    public String generateToken(String phone, String role) {
+    public String generateAccessToken(
+            String phone,
+            String role
+    ) {
+
         return Jwts.builder()
+
                 .setSubject(phone)
-                .claim("role", role)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationMillis))
+
+                .claim(
+                        "role",
+                        role
+                )
+
+                .claim(
+                        "tokenType",
+                        "ACCESS"
+                )
+
+                .setIssuedAt(
+                        new Date()
+                )
+
+                .setExpiration(
+                        new Date(
+                                System.currentTimeMillis()
+                                        + accessExpirationMillis
+                        )
+                )
+
                 .signWith(key)
+
                 .compact();
     }
 
-    // ================= PARSE =================
-    public Jws<Claims> parseToken(String token) throws JwtException {
+    // =========================
+    // REFRESH TOKEN
+    // =========================
+
+    public String generateRefreshToken(
+            String phone
+    ) {
+
+        return Jwts.builder()
+
+                .setSubject(phone)
+
+                .claim(
+                        "tokenType",
+                        "REFRESH"
+                )
+
+                .setIssuedAt(
+                        new Date()
+                )
+
+                .setExpiration(
+                        new Date(
+                                System.currentTimeMillis()
+                                        + refreshExpirationMillis
+                        )
+                )
+
+                .signWith(key)
+
+                .compact();
+    }
+
+    // =========================
+    // PARSE
+    // =========================
+
+    public Jws<Claims> parseToken(
+            String token
+    ) throws JwtException {
+
         return Jwts.parserBuilder()
+
                 .setSigningKey(key)
+
                 .build()
+
                 .parseClaimsJws(token);
     }
 
-    public String getPhoneFromToken(String token) {
-        return parseToken(token).getBody().getSubject();
+    // =========================
+    // PHONE
+    // =========================
+
+    public String getPhoneFromToken(
+            String token
+    ) {
+
+        return parseToken(token)
+                .getBody()
+                .getSubject();
     }
 
-    public String getRoleFromToken(String token) {
-        return (String) parseToken(token).getBody().get("role");
+    // =========================
+    // ROLE
+    // =========================
+
+    public String getRoleFromToken(
+            String token
+    ) {
+
+        return parseToken(token)
+                .getBody()
+                .get("role", String.class);
     }
 
-    public Integer getUserIdFromAuthHeader(String authHeader) {
-        String phone = getPhoneFromToken(authHeader.substring(7));
+    // =========================
+    // TOKEN TYPE
+    // =========================
 
-        User user = userRepository.findByPhoneNumber(phone)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public String getTokenType(
+            String token
+    ) {
 
-        return user.getId();
+        return parseToken(token)
+                .getBody()
+                .get("tokenType", String.class);
+    }
+
+    // =========================
+    // EXPIRATION
+    // =========================
+
+    public long getAccessExpirationSeconds() {
+
+        return accessExpirationMillis / 1000;
+    }
+
+    public long getRefreshExpirationSeconds() {
+
+        return refreshExpirationMillis / 1000;
     }
 }

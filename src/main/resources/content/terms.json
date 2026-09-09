@@ -90,8 +90,8 @@
       "id": "7",
       "title": "التواصل",
       "items": [
-        { "text": "البريد الإلكتروني:", "type": "bullet" },
-        { "text": "رقم خدمة العملاء:", "type": "bullet" }
+        { "text": "البريد الإلكتروني:support@ters.app", "type": "bullet" },
+        { "text": "رقم خدمة العملاء:0550305984", "type": "bullet" }
       ]
     }
   ]

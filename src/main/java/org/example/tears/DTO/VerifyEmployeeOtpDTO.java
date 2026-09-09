@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class VerifyEmployeeOtpDTO {
 
-    private String emailOrPhone;
+    private String email;
     private String otp;
 }
