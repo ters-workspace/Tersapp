@@ -28,7 +28,6 @@ public interface CarServiceRequestRepository extends JpaRepository<CarServiceReq
     );
 
 
-
     long countByAssignedPricingEmployee_IdAndPricingStatus(
             Integer employeeId,
             PricingStatus pricingStatus
@@ -62,13 +61,8 @@ AND
             @Param("plateArabic") String plateArabic,
             @Param("plateEnglish") String plateEnglish
     );
-
-
-
     List<CarServiceRequest> findByAssignedTechnician (Employee emp);
     List<CarServiceRequest> findByAssignedTechnicianIsNullAndAssignedPricingEmployeeIsNullAndAssignedSupportEmployeeIsNull();
-
-
 
     List<CarServiceRequest>
     findByCustomerIdAndCustomerStatusNotInOrderByCreatedAtDesc(
@@ -155,6 +149,18 @@ AND
             @Param("employeeId") Integer employeeId,
             @Param("newStatus") StaffRequestStatus newStatus,
             @Param("approvedWarrantyStatus") WarrantyStatus approvedWarrantyStatus
+    );
+
+
+    boolean existsByAppointmentDateAndAppointmentTimeAndCustomerStatusNot(
+            LocalDate appointmentDate,
+            LocalTime appointmentTime,
+            CustomerRequestStatus customerStatus
+    );
+
+    List<CarServiceRequest> findByAppointmentDateAndCustomerStatusNot(
+            LocalDate appointmentDate,
+            CustomerRequestStatus customerStatus
     );
 
 }

@@ -218,6 +218,28 @@ public class PaymentIntentService {
                 appointmentService.getAllAvailability()
         );
 
+        notificationService.send(
+
+                savedRequest.getCustomer().getUser(),
+
+                NotificationType.REQUEST_CREATED,
+                NotificationCategory.REQUEST,
+
+                "تم إنشاء طلبك",
+
+                "تم إنشاء طلبك #"
+                        + savedRequest.getOrderNumber()
+                        + " بنجاح.",
+
+                NotificationActionType.OPEN_ENTITY,
+
+                NotificationEntityType.REQUEST,
+
+                savedRequest.getId().toString(),
+
+                NotificationSection.REQUESTS
+        );
+
         return carServiceRequestService.toResponseDto(savedRequest);
     }
 
@@ -389,12 +411,56 @@ public class PaymentIntentService {
         req.setCreatedAt(LocalDateTime.now());
 
         CarServiceRequest savedRequest = requestRepository.save(req);
+        String paymentId =
+                resolveInvoicePaymentId(invoiceId);
 
+        savedRequest.setInitialTransactionId(paymentId);
+        savedRequest.setPaymentId(paymentId);
+        requestRepository.save(savedRequest);
         intent.setServiceRequest(savedRequest);
         intent.setPaymentStatus(PaymentStatus.PAID);
+        intent.setPaymentId(paymentId);
         intent.setPaidAt(LocalDateTime.now());
 
         paymentIntentRepository.save(intent);
+
+        socketService.send(
+                "/topic/current-orders/"
+                        + savedRequest.getCustomer()
+                        .getUser()
+                        .getId(),
+
+                carServiceRequestService.toCurrentDto(
+                        savedRequest
+                )
+        );
+
+        socketService.send(
+                "/topic/availability",
+                appointmentService.getAllAvailability()
+        );
+
+        notificationService.send(
+
+                savedRequest.getCustomer().getUser(),
+
+                NotificationType.REQUEST_CREATED,
+                NotificationCategory.REQUEST,
+
+                "تم إنشاء طلبك",
+
+                "تم إنشاء طلبك #"
+                        + savedRequest.getOrderNumber()
+                        + " بنجاح.",
+
+                NotificationActionType.OPEN_ENTITY,
+
+                NotificationEntityType.REQUEST,
+
+                savedRequest.getId().toString(),
+
+                NotificationSection.REQUESTS
+        );
 
         return carServiceRequestService.toResponseDto(savedRequest);
     }
@@ -673,8 +739,12 @@ public class PaymentIntentService {
 
             request = createRequestFromIntent(intent);
 
-            intent.setServiceRequest(request);
+            request.setInitialTransactionId(paymentId);
+            request.setPaymentId(paymentId);
 
+            requestRepository.save(request);
+
+            intent.setServiceRequest(request);
         } else {
 
             RequestApproval approval =
@@ -744,12 +814,17 @@ public class PaymentIntentService {
                 );
             }
 
-
             socketService.send(
                     "/topic/current-orders/" +
                             request.getCustomer().getUser().getId(),
                     carServiceRequestService.toCurrentDto(request)
             );
+
+            socketService.send(
+                    "/topic/request/" + request.getId(),
+                    carServiceRequestService.toDetailsDto(request)
+            );
+
             socketService.send(
                     "/topic/availability",
                     appointmentService.getAllAvailability()
@@ -1074,6 +1149,9 @@ public class PaymentIntentService {
         req.setCustomer(intent.getCustomer());
         req.setCar(intent.getCar());
 
+        req.setInitialTransactionId(intent.getPaymentId());
+        req.setPaymentId(intent.getPaymentId());
+
         req.setServiceOption(intent.getServiceOption());
         req.setProblemDescription(intent.getProblemDescription());
 
@@ -1123,8 +1201,46 @@ public class PaymentIntentService {
         saved.setOrderNumber(
                 String.format("ORD-%06d", saved.getId())
         );
+        notificationService.send(
 
+                saved.getCustomer().getUser(),
+
+                NotificationType.REQUEST_CREATED,
+                NotificationCategory.REQUEST,
+
+                "تم إنشاء طلبك",
+
+                "تم إنشاء طلبك #"
+                        + saved.getOrderNumber()
+                        + " بنجاح.",
+
+                NotificationActionType.OPEN_ENTITY,
+
+                NotificationEntityType.REQUEST,
+
+                saved.getId().toString(),
+
+                NotificationSection.REQUESTS
+        );
+
+        socketService.send(
+                "/topic/current-orders/" +
+                        req.getCustomer().getUser().getId(),
+                carServiceRequestService.toCurrentDto(req)
+        );
+
+        socketService.send(
+                "/topic/request/" + req.getId(),
+                carServiceRequestService.toDetailsDto(req)
+        );
+
+        socketService.send(
+                "/topic/availability",
+                appointmentService.getAllAvailability()
+        );
         return requestRepository.save(saved);
+
+
 
     }
 
@@ -1425,6 +1541,312 @@ public class PaymentIntentService {
         return plate;
     }
 
+    private String resolveInvoicePaymentId(String invoiceId) {
 
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setBasicAuth(secretKey, "");
+
+        ResponseEntity<Map> response =
+                restTemplate.exchange(
+                        "https://api.moyasar.com/v1/invoices/" + invoiceId,
+                        HttpMethod.GET,
+                        new HttpEntity<>(headers),
+                        Map.class
+                );
+
+        Map data = response.getBody();
+
+        if (data == null) {
+            throw new ApiException(
+                    "تعذر الحصول على بيانات الفاتورة"
+            );
+        }
+
+        Object paymentsObject =
+                data.get("payments");
+
+        if (!(paymentsObject instanceof java.util.List<?> payments)
+                || payments.isEmpty()) {
+
+            throw new ApiException(
+                    "لا توجد عملية دفع مرتبطة بالفاتورة"
+            );
+        }
+
+        for (Object item : payments) {
+
+            if (!(item instanceof Map<?, ?> payment)) {
+                continue;
+            }
+
+            Object status =
+                    payment.get("status");
+
+            Object id =
+                    payment.get("id");
+
+            if (id != null
+                    && status != null
+                    && "paid".equalsIgnoreCase(
+                    status.toString()
+            )) {
+
+                return id.toString();
+            }
+        }
+
+        throw new ApiException(
+                "لم يتم العثور على عملية دفع مكتملة"
+        );
+    }
+
+    private Integer calculateRefundAmount(
+            CarServiceRequest request
+    ) {
+
+        if (!request.isInitialPaid()) {
+            throw new ApiException(
+                    "لا توجد دفعة أولى مستحقة للاسترداد"
+            );
+        }
+
+        if (request.getInitialPaymentAmountHalalah() == null
+                || request.getInitialPaymentAmountHalalah() <= 0) {
+
+            throw new ApiException(
+                    "مبلغ الدفعة الأولى غير صحيح"
+            );
+        }
+
+        // مؤقتًا: Refund 100%
+        return request.getInitialPaymentAmountHalalah();
+    }
+    private String refundMoyasarPayment(
+            String paymentId,
+            Integer amountHalalah
+    ) {
+
+        if (paymentId == null || paymentId.isBlank()) {
+            throw new ApiException(
+                    "رقم عملية الدفع غير موجود"
+            );
+        }
+
+        HttpHeaders headers =
+                new HttpHeaders();
+
+        headers.setBasicAuth(
+                secretKey,
+                ""
+        );
+
+        headers.setContentType(
+                MediaType.APPLICATION_JSON
+        );
+
+        Map<String, Object> body =
+                new HashMap<>();
+
+        body.put(
+                "amount",
+                amountHalalah
+        );
+
+        ResponseEntity<Map> response =
+                restTemplate.exchange(
+                        "https://api.moyasar.com/v1/payments/"
+                                + paymentId
+                                + "/refund",
+                        HttpMethod.POST,
+                        new HttpEntity<>(
+                                body,
+                                headers
+                        ),
+                        Map.class
+                );
+
+        Map data =
+                response.getBody();
+
+        if (data == null) {
+            throw new ApiException(
+                    "لم يتم تنفيذ الاسترداد"
+            );
+        }
+
+        String status =
+                data.get("status") != null
+                        ? data.get("status").toString()
+                        : null;
+
+        if (!"refunded".equalsIgnoreCase(status)) {
+
+            throw new ApiException(
+                    "فشل استرداد المبلغ من Moyasar"
+            );
+        }
+
+        return data.get("id") != null
+                ? data.get("id").toString()
+                : paymentId;
+    }
+
+    @Transactional
+    public void refundInitialPayment(
+            CarServiceRequest request,
+            RefundMethod refundMethod
+    ) {
+
+        if (!request.isInitialPaid()) {
+
+            throw new ApiException(
+                    "لا توجد دفعة أولى لاستردادها"
+            );
+        }
+
+        if (request.isFinalPaid()) {
+
+            throw new ApiException(
+                    "لا يمكن استرداد الدفعة بعد سداد الدفعة النهائية"
+            );
+        }
+
+        if (request.getRefundStatus()
+                == RefundStatus.REFUNDED) {
+
+            throw new ApiException(
+                    "تم استرداد مبلغ الطلب مسبقًا"
+            );
+        }
+
+        if (refundMethod == null) {
+
+            throw new ApiException(
+                    "يرجى اختيار طريقة استرداد المبلغ"
+            );
+        }
+
+        Integer refundAmount =
+                calculateRefundAmount(request);
+
+        User user =
+                request.getCustomer().getUser();
+
+        String reference =
+                "REFUND-" + request.getOrderNumber();
+
+        request.setRefundStatus(
+                RefundStatus.PROCESSING
+        );
+
+        request.setRefundMethod(
+                refundMethod
+        );
+
+        request.setRefundAmountHalalah(
+                refundAmount
+        );
+
+        requestRepository.save(request);
+
+        try {
+
+            String refundTransactionId;
+
+            if (refundMethod == RefundMethod.WALLET) {
+
+                walletService.refundToWallet(
+                        user,
+                        refundAmount,
+                        reference,
+                        "استرداد مبلغ إلغاء الطلب #"
+                                + request.getOrderNumber()
+                );
+
+                refundTransactionId =
+                        reference;
+
+            } else {
+
+                refundTransactionId =
+                        getOriginalPaymentId(request);
+
+                refundTransactionId =
+                        refundMoyasarPayment(
+                                refundTransactionId,
+                                refundAmount
+                        );
+            }
+
+            request.setRefundTransactionId(
+                    refundTransactionId
+            );
+
+            request.setRefundStatus(
+                    RefundStatus.REFUNDED
+            );
+
+            request.setRefundedAt(
+                    LocalDateTime.now()
+            );
+
+            request.setInitialPaymentStatus(
+                    PaymentStatus.REFUNDED
+            );
+
+            request.setRefunded(true);
+            requestRepository.save(request);
+
+        } catch (Exception e) {
+
+            request.setRefundStatus(
+                    RefundStatus.FAILED
+            );
+
+            requestRepository.save(request);
+
+            throw e;
+        }
+    }
+
+    private String getOriginalPaymentId(
+            CarServiceRequest request
+    ) {
+
+        if (request.getInitialTransactionId() != null
+                && !request.getInitialTransactionId().isBlank()) {
+
+            return request.getInitialTransactionId();
+        }
+
+        PaymentIntent intent =
+                paymentIntentRepository
+                        .findByServiceRequestIdAndType(
+                                request.getId(),
+                                PaymentIntentType.REQUEST
+                        )
+                        .orElse(null);
+
+        if (intent != null
+                && intent.getPaymentId() != null
+                && !intent.getPaymentId().isBlank()) {
+
+            return intent.getPaymentId();
+        }
+
+        if (intent != null
+                && intent.getInvoiceId() != null
+                && !intent.getInvoiceId().isBlank()) {
+
+            return resolveInvoicePaymentId(
+                    intent.getInvoiceId()
+            );
+        }
+
+        throw new ApiException(
+                "تعذر العثور على عملية الدفع الأصلية"
+        );
+    }
 
 }

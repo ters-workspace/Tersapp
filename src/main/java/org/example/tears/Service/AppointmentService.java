@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.tears.Api.ApiException;
 import org.example.tears.DTO.SlotDto;
 import org.example.tears.Enums.AppointmentSlotStatus;
+import org.example.tears.Enums.CustomerRequestStatus;
 import org.example.tears.Enums.PaymentStatus;
 import org.example.tears.Model.CarServiceRequest;
 import org.example.tears.Repository.CarServiceRequestRepository;
@@ -68,9 +69,10 @@ public class AppointmentService {
         // الموعد محجوز فعليًا
         boolean requestExists =
                 requestRepository
-                        .existsByAppointmentDateAndAppointmentTime(
+                        .existsByAppointmentDateAndAppointmentTimeAndCustomerStatusNot(
                                 date,
-                                time
+                                time,
+                                CustomerRequestStatus.CANCELED
                         );
 
         // موعد عليه عملية دفع معلقة
@@ -96,7 +98,10 @@ public class AppointmentService {
     public Map<String, Object> getAvailability(LocalDate date) {
 
         List<CarServiceRequest> requests =
-                requestRepository.findByAppointmentDate(date);
+                requestRepository.findByAppointmentDateAndCustomerStatusNot(
+                        date,
+                        CustomerRequestStatus.CANCELED
+                );
 
         List<SlotDto> slots = new ArrayList<>();
 
@@ -181,7 +186,10 @@ public class AppointmentService {
 
             List<LocalTime> bookedTimes =
                     requestRepository
-                            .findByAppointmentDate(date)
+                            .findByAppointmentDateAndCustomerStatusNot(
+                                    date,
+                                    CustomerRequestStatus.CANCELED
+                            )
                             .stream()
                             .map(CarServiceRequest::getAppointmentTime)
                             .filter(Objects::nonNull)

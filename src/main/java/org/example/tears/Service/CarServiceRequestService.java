@@ -41,6 +41,8 @@ public class CarServiceRequestService {
     private final WarrantyRepository warrantyRequestRepository;
     private final SocketService socketService;
     private final RequestMapper requestMapper;
+    private final NotificationService notificationService;
+    private final PaymentIntentService paymentIntentService;
 
 
     // ---------------------------
@@ -838,24 +840,81 @@ public class CarServiceRequestService {
     ) {
 
         CarServiceRequest req =
-                requestRepository.findById(requestId)
+                requestRepository.findByIdForUpdate(requestId)
                         .orElseThrow(() ->
-                                new ApiException("الطلب غير موجود")
+                                new ApiException(
+                                        "الطلب غير موجود"
+                                )
                         );
+
+        // =========================
+        // Ownership
+        // =========================
 
         if (!req.getCustomer().getId()
                 .equals(customerId)) {
 
-            throw new ApiException("غير مصرح");
+            throw new ApiException(
+                    "غير مصرح"
+            );
         }
 
+        // =========================
+        // Already cancelled
+        // =========================
+
+        if (req.getCustomerStatus()
+                == CustomerRequestStatus.CANCELED) {
+
+            throw new ApiException(
+                    "الطلب ملغي مسبقًا"
+            );
+        }
+
+        // =========================
+        // Initial payment
+        // =========================
+
+        if (!req.isInitialPaid()) {
+
+            throw new ApiException(
+                    "لا يمكن إلغاء طلب لم يتم دفع الدفعة الأولى"
+            );
+        }
+
+        // =========================
+        // Final payment
+        // =========================
+
+        if (req.isFinalPaid()) {
+
+            throw new ApiException(
+                    "لا يمكن إلغاء الطلب بعد سداد الدفعة النهائية"
+            );
+        }
+
+        // =========================
+        // Car already received
+        // =========================
+
         if (
-                req.getCustomerStatus() == CustomerRequestStatus.CAR_RECEIVED
-                        || req.getCustomerStatus() == CustomerRequestStatus.CAR_INSPECTION
-                        || req.getCustomerStatus() == CustomerRequestStatus.WAITING_APPROVAL
-                        || req.getCustomerStatus() == CustomerRequestStatus.UNDER_REPAIR
-                        || req.getCustomerStatus() == CustomerRequestStatus.READY_FOR_DELIVERY
-                        || req.getCustomerStatus() == CustomerRequestStatus.DELIVERED
+                req.getCustomerStatus()
+                        == CustomerRequestStatus.CAR_RECEIVED
+
+                        || req.getCustomerStatus()
+                        == CustomerRequestStatus.CAR_INSPECTION
+
+                        || req.getCustomerStatus()
+                        == CustomerRequestStatus.WAITING_APPROVAL
+
+                        || req.getCustomerStatus()
+                        == CustomerRequestStatus.UNDER_REPAIR
+
+                        || req.getCustomerStatus()
+                        == CustomerRequestStatus.READY_FOR_DELIVERY
+
+                        || req.getCustomerStatus()
+                        == CustomerRequestStatus.DELIVERED
         ) {
 
             throw new ApiException(
@@ -863,14 +922,69 @@ public class CarServiceRequestService {
             );
         }
 
-        if (dto.getReason() == CancelReason.OTHER &&
-                (dto.getOtherReason() == null
-                        || dto.getOtherReason().isBlank())) {
+        // =========================
+        // Cancellation reason
+        // =========================
+
+        if (dto.getReason() == null) {
+
+            throw new ApiException(
+                    "يرجى اختيار سبب الإلغاء"
+            );
+        }
+
+        if (
+                dto.getReason()
+                        == CancelReason.OTHER
+
+                        && (
+                        dto.getOtherReason() == null
+                                || dto.getOtherReason().isBlank()
+                )
+        ) {
 
             throw new ApiException(
                     "يرجى كتابة سبب الإلغاء"
             );
         }
+
+        // =========================
+        // Already refunded
+        // =========================
+
+        if (req.isRefunded()) {
+
+            throw new ApiException(
+                    "تم استرداد مبلغ هذا الطلب مسبقًا"
+            );
+        }
+
+        // =========================
+        // Refund to wallet
+        // =========================
+
+        paymentIntentService.refundInitialPayment(
+                req,
+                RefundMethod.WALLET
+        );
+
+        req.setRefunded(true);
+
+        req.setRefundedAt(
+                LocalDateTime.now()
+        );
+
+        // =========================
+        // Save cancellation
+        // =========================
+
+        req.setCancellationReason(
+                dto.getReason().name()
+        );
+
+        req.setCancellationOtherReason(
+                dto.getOtherReason()
+        );
 
         req.setCustomerStatus(
                 CustomerRequestStatus.CANCELED
@@ -880,14 +994,58 @@ public class CarServiceRequestService {
                 WorkflowStage.CANCELLED
         );
 
+        req.setLastUpdated(
+                LocalDateTime.now()
+        );
+
         requestRepository.save(req);
+
+        // =========================
+        // Past Orders WebSocket
+        // =========================
+
         socketService.send(
-                "/topic/past-orders/" + req.getCustomer().getUser().getId(),
+                "/topic/past-orders/"
+                        + req.getCustomer()
+                        .getUser()
+                        .getId(),
+
                 toHistoryDto(req)
         );
+
+        // =========================
+        // Availability WebSocket
+        // =========================
+
         socketService.send(
                 "/topic/availability",
                 appointmentService.getAllAvailability()
+        );
+
+        // =========================
+        // Cancellation Notification
+        // =========================
+
+        notificationService.send(
+
+                req.getCustomer().getUser(),
+
+                NotificationType.REQUEST_CANCELLED,
+                NotificationCategory.REQUEST,
+
+                "تم إلغاء الطلب",
+
+                "تم إلغاء الطلب #"
+                        + req.getOrderNumber()
+                        + ". تم إرجاع مبلغ الدفعة الأولى إلى محفظتك.",
+
+                NotificationActionType.OPEN_ENTITY,
+
+                NotificationEntityType.REQUEST,
+
+                req.getId().toString(),
+
+                NotificationSection.REQUESTS
         );
     }
 

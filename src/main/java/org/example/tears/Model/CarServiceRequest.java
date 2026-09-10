@@ -200,5 +200,23 @@ public class CarServiceRequest {
     private LocalTime deliveryTime;
 
     private Boolean customerSelectedDelivery = false;
-    
+
+    @Enumerated(EnumType.STRING)
+    private RefundMethod refundMethod;
+
+    @Enumerated(EnumType.STRING)
+    private RefundStatus refundStatus = RefundStatus.NOT_REFUNDED;
+
+    private Integer refundAmountHalalah;
+
+    private String refundTransactionId;
+
+    private boolean refunded = false;
+
+    private LocalDateTime refundedAt;
+
+    private String cancellationReason;
+
+    @Column(columnDefinition = "TEXT")
+    private String cancellationOtherReason;
         }

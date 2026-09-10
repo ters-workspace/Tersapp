@@ -1,6 +1,7 @@
 package org.example.tears.DTO;
 
 import lombok.Data;
+import org.example.tears.Enums.JobTitle;
 
 @Data
 
@@ -11,5 +12,5 @@ public class EmployeeSupportListDto {
     private String email;
     private String phone;
     private String city;
-    private String jobTitle;
+    private JobTitle jobTitle;
 }

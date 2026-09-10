@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.tears.Enums.EmployeeCity;
 import org.example.tears.Enums.EmployeeRole;
+import org.example.tears.Enums.JobTitle;
+
 @Entity
 @Getter
 @Setter
@@ -19,7 +21,7 @@ public class Employee {
     private Integer id;
 
     @Column(nullable = false)
-    private String jobTitle;
+    private JobTitle jobTitle;
 
     private Boolean mustChangePassword = true;
 

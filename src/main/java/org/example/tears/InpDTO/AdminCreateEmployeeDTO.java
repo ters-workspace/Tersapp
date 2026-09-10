@@ -3,6 +3,7 @@ package org.example.tears.InpDTO;
 import lombok.Data;
 import org.example.tears.Enums.EmployeeCity;
 import org.example.tears.Enums.EmployeeRole;
+import org.example.tears.Enums.JobTitle;
 
 @Data
 public class AdminCreateEmployeeDTO {
@@ -11,7 +12,7 @@ public class AdminCreateEmployeeDTO {
 
     private String phoneNumber;
 
-    private String jobTitle;
+    private JobTitle jobTitle;
 
     private EmployeeCity city;
 

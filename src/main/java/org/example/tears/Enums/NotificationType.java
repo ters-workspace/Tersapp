@@ -3,6 +3,7 @@ package org.example.tears.Enums;
 public enum NotificationType {
 
     REQUEST_CREATED,
+    REQUEST_CANCELLED,
     REQUEST_STATUS_CHANGED,
     REQUEST_ASSIGNED,
     REQUEST_DELIVERED,

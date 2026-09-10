@@ -266,6 +266,49 @@ public class WalletService {
         );
     }
 
+    @Transactional
+    public void refundToWallet(
+            User user,
+            Integer amountHalalah,
+            String referenceNumber,
+            String description
+    ) {
 
+        if (amountHalalah == null || amountHalalah <= 0) {
+            throw new ApiException("مبلغ الاسترداد غير صحيح");
+        }
+
+        Wallet wallet =
+                walletRepository.findByUserIdForUpdate(user.getId())
+                        .orElseGet(() -> {
+
+                            Wallet newWallet = new Wallet();
+
+                            newWallet.setUser(user);
+                            newWallet.setBalance(0);
+                            newWallet.setCreatedAt(LocalDateTime.now());
+
+                            return walletRepository.save(newWallet);
+                        });
+
+        wallet.setBalance(
+                wallet.getBalance() + amountHalalah
+        );
+
+        walletRepository.save(wallet);
+
+        WalletTransaction transaction =
+                new WalletTransaction();
+
+        transaction.setWallet(wallet);
+        transaction.setAmount(amountHalalah);
+        transaction.setType(TransactionType.REFUND);
+        transaction.setPaymentMethod(PaymentMethod.WALLET);
+        transaction.setReferenceNumber(referenceNumber);
+        transaction.setDescription(description);
+        transaction.setCreatedAt(LocalDateTime.now());
+
+        walletTransactionRepository.save(transaction);
+    }
 
 }

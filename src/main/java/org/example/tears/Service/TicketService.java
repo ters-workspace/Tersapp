@@ -770,7 +770,7 @@ public class TicketService {
 
                     String jobTitle =
                             employee.getJobTitle() != null
-                                    ? employee.getJobTitle().toLowerCase()
+                                    ? employee.getJobTitle().name()
                                     : "";
 
                     return fullName.contains(search)
