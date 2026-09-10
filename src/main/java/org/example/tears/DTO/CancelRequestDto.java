@@ -10,6 +10,4 @@ public class CancelRequestDto {
 private CancelReason reason;
 private String otherReason;
 
-private RefundMethod refundMethod;
-
 }

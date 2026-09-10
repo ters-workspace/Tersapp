@@ -16,6 +16,7 @@ import org.example.tears.Repository.PaymentIntentRepository;
 import org.example.tears.Repository.RequestApprovalRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -34,6 +35,7 @@ public class PaymentIntentService {
 
     private final PaymentIntentRepository paymentIntentRepository;
     private final CarServiceRequestRepository requestRepository;
+    @Lazy
     private final CarServiceRequestService carServiceRequestService;
     private final NotificationService notificationService;
     private final RequestApprovalRepository approvalRepo;
