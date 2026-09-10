@@ -16,6 +16,8 @@ import org.example.tears.OutDTO.PricingResponse;
 import org.example.tears.OutDTO.RequestResponseDto;
 import org.example.tears.Model.*;
 import org.example.tears.Repository.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -23,6 +25,16 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -42,8 +54,14 @@ public class CarServiceRequestService {
     private final SocketService socketService;
     private final RequestMapper requestMapper;
     private final NotificationService notificationService;
-    private final PaymentIntentService paymentIntentService;
+    private final WalletService walletService;
+    private final PaymentIntentRepository paymentIntentRepository;
 
+    @Value("${MOYASAR_SECRET_KEY}")
+    private String secretKey;
+
+
+    private final RestTemplate restTemplate = new RestTemplate();
 
     // ---------------------------
     // Step 1: Preview
@@ -963,7 +981,7 @@ public class CarServiceRequestService {
         // Refund to wallet
         // =========================
 
-        paymentIntentService.refundInitialPayment(
+        refundInitialPayment(
                 req,
                 RefundMethod.WALLET
         );
@@ -1213,5 +1231,315 @@ public class CarServiceRequestService {
         );
 
         return req;
+    }
+
+
+    @Transactional
+    public void refundInitialPayment(
+            CarServiceRequest request,
+            RefundMethod refundMethod
+    ) {
+
+        if (!request.isInitialPaid()) {
+
+            throw new ApiException(
+                    "لا توجد دفعة أولى لاستردادها"
+            );
+        }
+
+        if (request.isFinalPaid()) {
+
+            throw new ApiException(
+                    "لا يمكن استرداد الدفعة بعد سداد الدفعة النهائية"
+            );
+        }
+
+        if (request.getRefundStatus()
+                == RefundStatus.REFUNDED) {
+
+            throw new ApiException(
+                    "تم استرداد مبلغ الطلب مسبقًا"
+            );
+        }
+
+        if (refundMethod == null) {
+
+            throw new ApiException(
+                    "يرجى اختيار طريقة استرداد المبلغ"
+            );
+        }
+
+        Integer refundAmount =
+                calculateRefundAmount(request);
+
+        User user =
+                request.getCustomer().getUser();
+
+        String reference =
+                "REFUND-" + request.getOrderNumber();
+
+        request.setRefundStatus(
+                RefundStatus.PROCESSING
+        );
+
+        request.setRefundMethod(
+                refundMethod
+        );
+
+        request.setRefundAmountHalalah(
+                refundAmount
+        );
+
+        requestRepository.save(request);
+
+        try {
+
+            String refundTransactionId;
+
+            if (refundMethod == RefundMethod.WALLET) {
+
+                walletService.refundToWallet(
+                        user,
+                        refundAmount,
+                        reference,
+                        "استرداد مبلغ إلغاء الطلب #"
+                                + request.getOrderNumber()
+                );
+
+                refundTransactionId =
+                        reference;
+
+            } else {
+
+                refundTransactionId =
+                        getOriginalPaymentId(request);
+
+                refundTransactionId =
+                        refundMoyasarPayment(
+                                refundTransactionId,
+                                refundAmount
+                        );
+            }
+
+            request.setRefundTransactionId(
+                    refundTransactionId
+            );
+
+            request.setRefundStatus(
+                    RefundStatus.REFUNDED
+            );
+
+            request.setRefundedAt(
+                    LocalDateTime.now()
+            );
+
+            request.setInitialPaymentStatus(
+                    PaymentStatus.REFUNDED
+            );
+
+            request.setRefunded(true);
+            requestRepository.save(request);
+
+        } catch (Exception e) {
+
+            request.setRefundStatus(
+                    RefundStatus.FAILED
+            );
+
+            requestRepository.save(request);
+
+            throw e;
+        }
+    }
+
+    private Integer calculateRefundAmount(
+            CarServiceRequest request
+    ) {
+
+        if (!request.isInitialPaid()) {
+            throw new ApiException(
+                    "لا توجد دفعة أولى مستحقة للاسترداد"
+            );
+        }
+
+        if (request.getInitialPaymentAmountHalalah() == null
+                || request.getInitialPaymentAmountHalalah() <= 0) {
+
+            throw new ApiException(
+                    "مبلغ الدفعة الأولى غير صحيح"
+            );
+        }
+
+        // مؤقتًا: Refund 100%
+        return request.getInitialPaymentAmountHalalah();
+    }
+    private String refundMoyasarPayment(
+            String paymentId,
+            Integer amountHalalah
+    ) {
+
+        if (paymentId == null || paymentId.isBlank()) {
+            throw new ApiException(
+                    "رقم عملية الدفع غير موجود"
+            );
+        }
+
+        HttpHeaders headers =
+                new HttpHeaders();
+
+        headers.setBasicAuth(
+                secretKey,
+                ""
+        );
+
+        headers.setContentType(
+                MediaType.APPLICATION_JSON
+        );
+
+        Map<String, Object> body =
+                new HashMap<>();
+
+        body.put(
+                "amount",
+                amountHalalah
+        );
+
+        ResponseEntity<Map> response =
+                restTemplate.exchange(
+                        "https://api.moyasar.com/v1/payments/"
+                                + paymentId
+                                + "/refund",
+                        HttpMethod.POST,
+                        new HttpEntity<>(
+                                body,
+                                headers
+                        ),
+                        Map.class
+                );
+
+        Map data =
+                response.getBody();
+
+        if (data == null) {
+            throw new ApiException(
+                    "لم يتم تنفيذ الاسترداد"
+            );
+        }
+
+        String status =
+                data.get("status") != null
+                        ? data.get("status").toString()
+                        : null;
+
+        if (!"refunded".equalsIgnoreCase(status)) {
+
+            throw new ApiException(
+                    "فشل استرداد المبلغ من Moyasar"
+            );
+        }
+
+        return data.get("id") != null
+                ? data.get("id").toString()
+                : paymentId;
+    }
+
+
+    private String getOriginalPaymentId(
+            CarServiceRequest request
+    ) {
+
+        if (request.getInitialTransactionId() != null
+                && !request.getInitialTransactionId().isBlank()) {
+
+            return request.getInitialTransactionId();
+        }
+
+        PaymentIntent intent =
+                paymentIntentRepository
+                        .findByServiceRequestIdAndType(
+                                request.getId(),
+                                PaymentIntentType.REQUEST
+                        )
+                        .orElse(null);
+
+        if (intent != null
+                && intent.getPaymentId() != null
+                && !intent.getPaymentId().isBlank()) {
+
+            return intent.getPaymentId();
+        }
+
+        if (intent != null
+                && intent.getInvoiceId() != null
+                && !intent.getInvoiceId().isBlank()) {
+
+            return resolveInvoicePaymentId(
+                    intent.getInvoiceId()
+            );
+        }
+
+        throw new ApiException(
+                "تعذر العثور على عملية الدفع الأصلية"
+        );
+    }
+    
+    private String resolveInvoicePaymentId(String invoiceId) {
+
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setBasicAuth(secretKey, "");
+
+        ResponseEntity<Map> response =
+                restTemplate.exchange(
+                        "https://api.moyasar.com/v1/invoices/" + invoiceId,
+                        HttpMethod.GET,
+                        new HttpEntity<>(headers),
+                        Map.class
+                );
+
+        Map data = response.getBody();
+
+        if (data == null) {
+            throw new ApiException(
+                    "تعذر الحصول على بيانات الفاتورة"
+            );
+        }
+
+        Object paymentsObject =
+                data.get("payments");
+
+        if (!(paymentsObject instanceof java.util.List<?> payments)
+                || payments.isEmpty()) {
+
+            throw new ApiException(
+                    "لا توجد عملية دفع مرتبطة بالفاتورة"
+            );
+        }
+
+        for (Object item : payments) {
+
+            if (!(item instanceof Map<?, ?> payment)) {
+                continue;
+            }
+
+            Object status =
+                    payment.get("status");
+
+            Object id =
+                    payment.get("id");
+
+            if (id != null
+                    && status != null
+                    && "paid".equalsIgnoreCase(
+                    status.toString()
+            )) {
+
+                return id.toString();
+            }
+        }
+
+        throw new ApiException(
+                "لم يتم العثور على عملية دفع مكتملة"
+        );
     }
 }
