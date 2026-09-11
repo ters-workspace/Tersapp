@@ -61,6 +61,22 @@ AND
             @Param("plateArabic") String plateArabic,
             @Param("plateEnglish") String plateEnglish
     );
+
+    @Query("""
+SELECT r
+FROM CarServiceRequest r
+LEFT JOIN r.currentEmployee e
+LEFT JOIN e.user u
+WHERE
+(:search IS NULL OR
+ r.orderNumber LIKE CONCAT('%', :search, '%')
+ OR u.fullName LIKE CONCAT('%', :search, '%')
+)
+""")
+    List<CarServiceRequest> searchAD(
+            @Param("search") String search
+    );
+
     List<CarServiceRequest> findByAssignedTechnician (Employee emp);
     List<CarServiceRequest> findByAssignedTechnicianIsNullAndAssignedPricingEmployeeIsNullAndAssignedSupportEmployeeIsNull();
 

@@ -1482,7 +1482,7 @@ public class CarServiceRequestService {
                 "تعذر العثور على عملية الدفع الأصلية"
         );
     }
-    
+
     private String resolveInvoicePaymentId(String invoiceId) {
 
         HttpHeaders headers = new HttpHeaders();

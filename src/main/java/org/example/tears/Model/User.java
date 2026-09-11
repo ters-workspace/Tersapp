@@ -25,6 +25,7 @@ public class User {
     @Size(min = 3, max = 70, message = "First name must be between 3 and 20 characters")
     @Column(nullable = false)
     private String fullName;
+
     @Email
     @Column(nullable = true, unique = true)
     private String email;
@@ -51,7 +52,8 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserStatus status = UserStatus.PENDING_VERIFICATION;
+    private UserStatus status ;
+
 
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

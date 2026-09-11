@@ -3,9 +3,11 @@ package org.example.tears.Controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tears.Api.ApiResponse;
+import org.example.tears.DTO.DashboardContactResponseDto;
 import org.example.tears.DTO.EmployeeListDto;
 import org.example.tears.DTO.RequestSummaryDto;
 import org.example.tears.DTO.ResetAdminPasswordDto;
+import org.example.tears.Enums.DashboardSection;
 import org.example.tears.InpDTO.AdminCreateEmployeeDTO;
 import org.example.tears.Model.Appointment;
 import org.example.tears.Model.Employee;
@@ -29,6 +31,17 @@ public class AdminController {
     private final AssignmentService assignmentService;
     private final RequestQueryService requestQueryService;
     private final AuthService authService;
+    private final DashboardService dashboardService;
+
+    @GetMapping("/get")
+    public ApiResponse getDashboard() {
+
+        return new ApiResponse(
+                true,
+                "تم جلب إحصائيات لوحة التحكم",
+                dashboardService.getDashboard()
+        );
+    }
 
     @PutMapping("/admin/reset-password")
     public ApiResponse resetAdminPassword(
@@ -66,41 +79,61 @@ public class AdminController {
 
     @GetMapping("/requests/search")
     public List<RequestSummaryDto> search(
-
             @RequestParam(required = false)
-            String orderNumber,
+            String search
+    ) {
+        return requestQueryService.search(search);
+    }
 
-            @RequestParam(required = false)
-            String plateArabic,
 
-            @RequestParam(required = false)
-            String plateEnglish
+    @GetMapping("/stats")
+    public ApiResponse getDashboardStats(
+            @RequestParam(
+                    defaultValue = "ALL"
+            )
+            DashboardSection section
     ) {
 
-        return requestQueryService.search(
-                orderNumber,
-                plateArabic,
-                plateEnglish
+        return new ApiResponse(
+                true,
+                "تم جلب إحصائيات الطلبات",
+                dashboardService.getStats(section)
         );
     }
 
-    // جلب كل الطلبات
-//    @GetMapping("/admin/requests")
-//    public ResponseEntity<?> getAllRequests() {
-//        var requests = adminService.getAllRequests();
-//
-//        if (requests.isEmpty()) {
-//            return ResponseEntity.ok(Map.of(
-//                    "success", false,
-//                    "message", "لا توجد طلبات حالياً"
-//            ));
-//        }
-//
-//        return ResponseEntity.ok(Map.of(
-//                "success", true,
-//                "data", requests
-//        ));
-//    }
+    @GetMapping("/items")
+    public ApiResponse getDashboardItems(
+
+            @RequestParam(
+                    defaultValue = "ALL"
+            )
+            DashboardSection section,
+
+            @RequestParam(
+                    required = false
+            )
+            String status
+    ) {
+
+        return new ApiResponse(
+                true,
+                "تم جلب بيانات لوحة التحكم",
+                dashboardService.getItems(
+                        section,
+                        status
+                )
+        );
+    }
+
+    @GetMapping("/contact")
+    public ResponseEntity<DashboardContactResponseDto> getContactInfo(
+            @RequestParam String itemType,
+            @RequestParam Integer itemId
+    ) {
+        return ResponseEntity.ok(
+                dashboardService.getContactInfo(itemType, itemId)
+        );
+    }
 
     @PostMapping("/admin/assign")
     public ApiResponse assignRequest(

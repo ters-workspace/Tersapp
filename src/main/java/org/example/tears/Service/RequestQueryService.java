@@ -305,6 +305,14 @@ public class RequestQueryService {
                 .toList();
     }
 
+    public List<RequestSummaryDto> search(String search) {
+
+        return requestRepo.searchAD(search)
+                .stream()
+                .map(requestMapper::toSummaryDto)
+                .toList();
+    }
+
     public List<EmployeeRequestResponseDto> searchMyRequests(
             Employee employee,
             String orderNumber,
