@@ -48,6 +48,7 @@ public class AuthService {
         user.setPhoneNumber(dto.getPhoneNumber());
         user.setRole(UserRole.CUSTOMER);
         user.setStatus(UserStatus.ACTIVE);
+        user.setCreatedAt(LocalDateTime.now());
         user.setPassword(encoder.encode("TEMP@1234"));
 
         Customer customer = new Customer();

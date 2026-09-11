@@ -6,6 +6,8 @@ import lombok.*;
 import org.example.tears.Enums.UserRole;
 import org.example.tears.Enums.UserStatus;
 
+import java.time.LocalDateTime;
+
 
 @Data
 @Getter
@@ -54,6 +56,7 @@ public class User {
     @Column(nullable = false)
     private UserStatus status ;
 
+    private LocalDateTime createdAt;
 
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -17,7 +17,12 @@ import org.example.tears.Repository.EmployeeRepository;
 import org.example.tears.Repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.Arrays;
 
+import java.time.LocalDateTime;
 import java.util.List;
 @Service
 @RequiredArgsConstructor
@@ -80,6 +85,8 @@ public class AdminService {
         user.setStatus(
                 UserStatus.ACTIVE
         );
+
+        user.setCreatedAt(LocalDateTime.now());
 
         User savedUser =
                 userRepo.save(

@@ -12,7 +12,11 @@ import java.math.BigDecimal;
 public class DashboardDto {
 
     private Long totalRequests;
-    private Long totalEmployees;
+    private BigDecimal requestsGrowthPercentage;
+
+    private Long activeEmployees;
+    private Long newEmployeesThisMonth;
+
     private BigDecimal totalRevenue;
 
     private CustomerAppStats customerApp;

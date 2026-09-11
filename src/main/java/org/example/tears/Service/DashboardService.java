@@ -7,6 +7,11 @@ import org.example.tears.Enums.*;
 import org.example.tears.Model.*;
 import org.example.tears.Repository.*;
 import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.Arrays;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -23,6 +28,219 @@ public class DashboardService {
     private final TicketRepository ticketRepository;
     private final WarrantyRepository warrantyRepository;
 
+    public DashboardDto getDashboard() {
+
+        // =========================
+        // REQUESTS
+        // =========================
+
+        long totalRequests =
+                requestRepository.count();
+
+        YearMonth currentMonth =
+                YearMonth.now();
+
+        YearMonth previousMonth =
+                currentMonth.minusMonths(1);
+
+        LocalDateTime currentMonthStart =
+                currentMonth.atDay(1).atStartOfDay();
+
+        LocalDateTime nextMonthStart =
+                currentMonth.plusMonths(1)
+                        .atDay(1)
+                        .atStartOfDay();
+
+        LocalDateTime previousMonthStart =
+                previousMonth.atDay(1)
+                        .atStartOfDay();
+
+        long currentMonthRequests =
+                requestRepository
+                        .countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                                currentMonthStart,
+                                nextMonthStart
+                        );
+
+        long previousMonthRequests =
+                requestRepository
+                        .countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                                previousMonthStart,
+                                currentMonthStart
+                        );
+
+        BigDecimal requestsGrowthPercentage =
+                calculateGrowthPercentage(
+                        currentMonthRequests,
+                        previousMonthRequests
+                );
+
+
+        // =========================
+        // EMPLOYEES
+        // =========================
+
+        List<JobTitle> employeeJobTitles =
+                Arrays.asList(
+                        JobTitle.TECHNICIAN,
+                        JobTitle.PRICING
+                );
+
+        long activeEmployees =
+                employeeRepository
+                        .countByUser_StatusAndJobTitleIn(
+                                UserStatus.ACTIVE,
+                                employeeJobTitles
+                        );
+
+        LocalDateTime monthStart =
+                currentMonthStart;
+
+        long newEmployeesThisMonth =
+                employeeRepository
+                        .countByUser_StatusAndJobTitleInAndUser_CreatedAtGreaterThanEqual(
+                                UserStatus.ACTIVE,
+                                employeeJobTitles,
+                                monthStart
+                        );
+
+
+        // =========================
+        // REVENUE
+        // =========================
+
+        BigDecimal totalRevenue =
+                requestRepository.sumFinalPrice();
+
+        if (totalRevenue == null) {
+            totalRevenue = BigDecimal.ZERO;
+        }
+
+
+        // =========================
+        // TODAY
+        // =========================
+
+        LocalDate today =
+                LocalDate.now();
+
+        LocalDateTime todayStart =
+                today.atStartOfDay();
+
+        LocalDateTime tomorrowStart =
+                today.plusDays(1)
+                        .atStartOfDay();
+
+
+        // =========================
+        // CUSTOMER APP
+        // =========================
+
+        long activeCustomers =
+                userRepository.countByRoleAndStatus(
+                        UserRole.CUSTOMER,
+                        UserStatus.ACTIVE
+                );
+
+        long todayRequests =
+                requestRepository
+                        .countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                                todayStart,
+                                tomorrowStart
+                        );
+
+        CustomerAppStats customerApp =
+                new CustomerAppStats(
+                        activeCustomers,
+                        todayRequests,
+                        AppStatus.READY
+                );
+
+
+        // =========================
+        // EMPLOYEE APP
+        // =========================
+
+        long todayWorkedRequests =
+                requestRepository
+                        .countByStaffStatusNotAndLastUpdatedGreaterThanEqualAndLastUpdatedLessThan(
+                                StaffRequestStatus.NEW,
+                                todayStart,
+                                tomorrowStart
+                        );
+
+        EmployeeAppStats employeeApp =
+                new EmployeeAppStats(
+                        activeEmployees,
+                        todayWorkedRequests,
+                        AppStatus.READY
+                );
+
+
+        // =========================
+        // CUSTOMER SERVICE
+        // =========================
+
+        long activeCustomerServiceEmployees =
+                employeeRepository
+                        .countByUser_StatusAndJobTitle(
+                                UserStatus.ACTIVE,
+                                JobTitle.CUSTOMER_SERVICE
+                        );
+
+        long todayTickets =
+                ticketRepository
+                        .countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                                todayStart,
+                                tomorrowStart
+                        );
+
+        CustomerServiceStats customerService =
+                new CustomerServiceStats(
+                        activeCustomerServiceEmployees,
+                        todayTickets,
+                        AppStatus.READY
+                );
+
+
+        // =========================
+        // FINAL RESPONSE
+        // =========================
+
+        return new DashboardDto(
+                totalRequests,
+                requestsGrowthPercentage,
+                activeEmployees,
+                newEmployeesThisMonth,
+                totalRevenue,
+                customerApp,
+                employeeApp,
+                customerService
+        );
+    }
+
+    private BigDecimal calculateGrowthPercentage(
+            long current,
+            long previous
+    ) {
+
+        if (previous == 0) {
+
+            if (current == 0) {
+                return BigDecimal.ZERO;
+            }
+
+            return BigDecimal.valueOf(100);
+        }
+
+        return BigDecimal.valueOf(current - previous)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(
+                        BigDecimal.valueOf(previous),
+                        2,
+                        java.math.RoundingMode.HALF_UP
+                );
+    }
 
     public DashboardStatsDto getStats(
             DashboardSection section
@@ -1019,17 +1237,5 @@ public class DashboardService {
         return contacts;
     }
 
-    public DashboardDto getDashboard() {
 
-        // هنا نحط الـ counts الحقيقية من الـ repositories
-
-        return new DashboardDto(
-                // totalRequests
-                // totalEmployees
-                // totalRevenue
-                // customerApp
-                // employeeApp
-                // customerService
-        );
-    }
 }
