@@ -199,5 +199,20 @@ WHERE r.finalPrice IS NOT NULL
 """)
     BigDecimal sumFinalPrice();
 
+    @Query("""
+SELECT COUNT(r)
+FROM CarServiceRequest r
+WHERE
+    r.staffStatus = :status
+    AND (
+        r.assignedTechnician.id = :employeeId
+        OR r.assignedPricingEmployee.id = :employeeId
+        OR r.assignedSupportEmployee.id = :employeeId
+    )
+""")
+    long countCompletedRequestsByEmployee(
+            @Param("employeeId") Integer employeeId,
+            @Param("status") StaffRequestStatus status
+    );
 
 }

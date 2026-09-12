@@ -3,10 +3,7 @@ package org.example.tears.Controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tears.Api.ApiResponse;
-import org.example.tears.DTO.DashboardContactResponseDto;
-import org.example.tears.DTO.EmployeeListDto;
-import org.example.tears.DTO.RequestSummaryDto;
-import org.example.tears.DTO.ResetAdminPasswordDto;
+import org.example.tears.DTO.*;
 import org.example.tears.Enums.DashboardSection;
 import org.example.tears.InpDTO.AdminCreateEmployeeDTO;
 import org.example.tears.Model.Appointment;
@@ -75,6 +72,15 @@ public class AdminController {
     @GetMapping("/employees")
     public List<EmployeeListDto> employees() {
         return adminService.getAllEmployees();
+    }
+
+    @GetMapping("/employees")
+    public ResponseEntity<EmployeeDashboardDto> getEmployees(
+            @RequestParam(required = false) String search
+    ) {
+        return ResponseEntity.ok(
+                dashboardService.getEmployees(search)
+        );
     }
 
     @GetMapping("/requests/search")

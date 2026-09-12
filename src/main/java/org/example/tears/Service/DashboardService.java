@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.tears.Api.ApiException;
 import org.example.tears.DTO.*;
 import org.example.tears.Enums.*;
+import org.example.tears.Mapper.RequestMapper;
 import org.example.tears.Model.*;
 import org.example.tears.Repository.*;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class DashboardService {
     private final UserRepository userRepository;
     private final TicketRepository ticketRepository;
     private final WarrantyRepository warrantyRepository;
+    private final RequestMapper requestMapper;
 
     public DashboardDto getDashboard() {
 
@@ -240,6 +242,69 @@ public class DashboardService {
                         2,
                         java.math.RoundingMode.HALF_UP
                 );
+    }
+
+    public EmployeeDashboardDto getEmployees(String search) {
+
+        long totalEmployees =
+                employeeRepository.countByUser_Status(
+                        UserStatus.ACTIVE
+                );
+
+        long technicians =
+                employeeRepository.countByUser_StatusAndJobTitle(
+                        UserStatus.ACTIVE,
+                        JobTitle.TECHNICIAN
+                );
+
+        long pricingEmployees =
+                employeeRepository.countByUser_StatusAndJobTitle(
+                        UserStatus.ACTIVE,
+                        JobTitle.PRICING
+                );
+
+        long customerServiceEmployees =
+                employeeRepository.countByUser_StatusAndJobTitle(
+                        UserStatus.ACTIVE,
+                        JobTitle.CUSTOMER_SERVICE
+                );
+
+        List<Employee> employees;
+
+        if (search == null || search.trim().isEmpty()) {
+            employees = employeeRepository.findAll();
+        } else {
+            employees = employeeRepository.searchEmployees(
+                    search.trim()
+            );
+        }
+
+        List<EmployeeListDto> employeeList =
+                new ArrayList<>();
+
+        for (Employee employee : employees) {
+
+            long completedRequests =
+                    requestRepository.countCompletedRequestsByEmployee(
+                            employee.getId(),
+                            StaffRequestStatus.DELIVERED
+                    );
+
+            employeeList.add(
+                    requestMapper.toEmployeeAdminDto(
+                            employee,
+                            completedRequests
+                    )
+            );
+        }
+
+        return new EmployeeDashboardDto(
+                totalEmployees,
+                technicians,
+                pricingEmployees,
+                customerServiceEmployees,
+                employeeList
+        );
     }
 
     public DashboardStatsDto getStats(

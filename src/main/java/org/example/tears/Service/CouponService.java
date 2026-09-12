@@ -2,6 +2,8 @@ package org.example.tears.Service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.tears.Api.ApiException;
+import org.example.tears.DTO.CouponListDto;
+import org.example.tears.DTO.CouponStatsDto;
 import org.example.tears.DTO.CustomerCouponDto;
 import org.example.tears.Enums.ServiceOption;
 import org.example.tears.InpDTO.CreateCouponRequest;
@@ -45,6 +47,7 @@ public class CouponService {
         coupon.setMaxDiscountAmount(dto.getMaxDiscountAmount());
         coupon.setExpiryDate(dto.getExpiryDate());
         coupon.setServiceOption(dto.getServiceOption());
+        coupon.setCreatedAt(LocalDateTime.now());
 
         return couponRepository.save(coupon);
     }
@@ -338,4 +341,128 @@ public class CouponService {
 
         couponRepository.save(coupon);
     }
+
+    public CouponStatsDto getCouponStats() {
+
+        long totalCoupons =
+                couponRepository.count();
+
+        long activeCoupons =
+                couponRepository.countByActiveTrue();
+
+        LocalDate today =
+                LocalDate.now();
+
+        LocalDate sevenDaysLater =
+                today.plusDays(7);
+
+        long expiringSoon =
+                couponRepository
+                        .countByActiveTrueAndExpiryDateGreaterThanEqualAndExpiryDateLessThanEqual(
+                                today,
+                                sevenDaysLater
+                        );
+
+        return new CouponStatsDto(
+                totalCoupons,
+                activeCoupons,
+                expiringSoon
+        );
+    }
+
+    private CouponListDto toCouponListDto(
+            Coupon coupon
+    ) {
+
+        CouponListDto dto =
+                new CouponListDto();
+
+        dto.setId(
+                coupon.getId()
+        );
+
+        dto.setCode(
+                coupon.getCode()
+        );
+
+        // نوع وقيمة الخصم
+        if (coupon.getDiscountPercentage() != null) {
+
+            dto.setDiscountType(
+                    "PERCENTAGE"
+            );
+
+            dto.setDiscountValue(
+                    coupon.getDiscountPercentage() + "%"
+            );
+
+        } else if (coupon.getFixedDiscount() != null) {
+
+            dto.setDiscountType(
+                    "FIXED"
+            );
+
+            dto.setDiscountValue(
+                    coupon.getFixedDiscount() + " SAR"
+            );
+
+        } else {
+
+            dto.setDiscountType(
+                    "UNKNOWN"
+            );
+
+            dto.setDiscountValue(
+                    "0"
+            );
+        }
+
+        dto.setUsedCount(
+                coupon.getUsedCount() == null
+                        ? 0
+                        : coupon.getUsedCount()
+        );
+
+        dto.setUsageLimit(
+                coupon.getUsageLimit()
+        );
+
+        dto.setExpiryDate(
+                coupon.getExpiryDate()
+        );
+
+        dto.setActive(
+                coupon.isActive()
+        );
+
+        return dto;
+    }
+    public List<CouponListDto> getAllForAdmin() {
+
+        return couponRepository
+                .findAll()
+                .stream()
+                .map(this::toCouponListDto)
+                .toList();
+    }
+
+    public List<CouponListDto> searchForAdmin(
+            String search
+    ) {
+
+        if (search == null ||
+                search.isBlank()) {
+
+            return getAllForAdmin();
+        }
+
+        return couponRepository
+                .searchCoupons(
+                        search.trim()
+                )
+                .stream()
+                .map(this::toCouponListDto)
+                .toList();
+    }
+
 }

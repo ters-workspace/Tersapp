@@ -6,6 +6,7 @@ import org.example.tears.Api.ApiResponse;
 import org.example.tears.Config.PasswordGenerator;
 import org.example.tears.Config.TempEmailGenerator;
 import org.example.tears.DTO.EmployeeListDto;
+import org.example.tears.Enums.StaffRequestStatus;
 import org.example.tears.Enums.UserRole;
 import org.example.tears.Enums.UserStatus;
 import org.example.tears.InpDTO.AdminCreateEmployeeDTO;
@@ -13,6 +14,7 @@ import org.example.tears.Mapper.RequestMapper;
 import org.example.tears.Model.Employee;
 import org.example.tears.Model.User;
 import org.example.tears.OutDTO.EmployeeLoginInfo;
+import org.example.tears.Repository.CarServiceRequestRepository;
 import org.example.tears.Repository.EmployeeRepository;
 import org.example.tears.Repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import java.time.LocalDateTime;
@@ -33,6 +36,7 @@ public class AdminService {
     private final TempEmailGenerator emailGen;
     private final RequestMapper requestMapper;
     private final UserRepository userRepo;
+    private final CarServiceRequestRepository requestRepo;
 
 
     // ================= Employee (Admin registers only) =================
@@ -133,12 +137,31 @@ public class AdminService {
 
     public List<EmployeeListDto> getAllEmployees() {
 
-        return employeeRepository.findAll()
-                .stream()
-                .map(requestMapper::toEmployeeDto)
-                .toList();
-    }
+        List<Employee> employees =
+                employeeRepository.findAll();
 
+        List<EmployeeListDto> result =
+                new ArrayList<>();
+
+        for (Employee employee : employees) {
+
+            long completedRequests =
+                    requestRepo
+                            .countCompletedRequestsByEmployee(
+                                    employee.getId(),
+                                    StaffRequestStatus.DELIVERED
+                            );
+
+            result.add(
+                    requestMapper.toEmployeeAdminDto(
+                            employee,
+                            completedRequests
+                    )
+            );
+        }
+
+        return result;
+    }
 
 
     public ApiResponse deactivateEmployee(Integer id) {

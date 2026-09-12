@@ -2,6 +2,7 @@ package org.example.tears.Controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.tears.Api.ApiException;
+import org.example.tears.Api.ApiResponse;
 import org.example.tears.DTO.CustomerCouponDto;
 import org.example.tears.InpDTO.CreateCouponRequest;
 import org.example.tears.InpDTO.UpdateCouponRequest;
@@ -62,6 +63,39 @@ public class CouponController {
                 );
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/admin/stats")
+    public ApiResponse getCouponStats() {
+
+        return new ApiResponse(
+                true,
+                "تم جلب إحصائيات الكوبونات",
+                couponService.getCouponStats()
+        );
+    }
+
+    @GetMapping("/admin/all")
+    public ApiResponse getAllCouponsForAdmin() {
+
+        return new ApiResponse(
+                true,
+                "تم جلب الكوبونات",
+                couponService.getAllForAdmin()
+        );
+    }
+
+    @GetMapping("/admin/search")
+    public ApiResponse searchCoupons(
+            @RequestParam(required = false)
+            String search
+    ) {
+
+        return new ApiResponse(
+                true,
+                "تم البحث في الكوبونات",
+                couponService.searchForAdmin(search)
+        );
     }
 
     @PutMapping("/disable/{id}")

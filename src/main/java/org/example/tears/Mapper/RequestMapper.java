@@ -526,36 +526,56 @@ public class RequestMapper {
     }
 
 
+     public EmployeeListDto toEmployeeAdminDto(
+                Employee employee,
+                Long completedRequests
+) {
 
-    public EmployeeListDto toEmployeeDto(Employee employee) {
+            EmployeeListDto dto =
+                    new EmployeeListDto();
 
-        EmployeeListDto dto = new EmployeeListDto();
+            dto.setId(employee.getId());
 
-        dto.setId(employee.getId());
+            dto.setFullName(
+                    employee.getUser().getFullName()
+            );
 
-        dto.setFullName(
-                employee.getUser().getFullName()
-        );
+            dto.setEmployeeCode(
+                    employee.getEmployeeCode()
+            );
 
-        dto.setPhoneNumber(
-                employee.getUser().getPhoneNumber()
-        );
+            dto.setEmail(
+                    employee.getUser().getEmail()
+            );
 
-        dto.setJobTitle(
-                employee.getJobTitle()
-        );
+            dto.setPhone(
+                    employee.getUser().getPhoneNumber()
+            );
 
-        dto.setRole(
-                employee.getEmployeeRole().name()
-        );
+            if (employee.getCity() != null) {
+                dto.setCity(
+                        employee.getCity().name()
+                );
+            }
 
+            dto.setJobTitle(
+                    employee.getJobTitle()
+            );
 
-        dto.setStatus(
-                employee.getUser().getStatus().name()
-        );
+            dto.setStatus(
+                    employee.getUser().getStatus().name()
+            );
 
-        return dto;
-    }
+            dto.setJoinedAt(
+                    employee.getUser().getCreatedAt()
+            );
+
+            dto.setCompletedRequests(
+                    completedRequests
+            );
+
+            return dto;
+        }
 
     public String formatEnglishPlate(String plate) {
 
