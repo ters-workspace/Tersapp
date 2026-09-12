@@ -275,6 +275,11 @@ public class ChatService {
 
         ChatRoom room = getRoom(roomId, currentUser);
 
+        // الغرف القديمة قد لا تحتوي على userOne / userTwo
+        if (room.getUserOne() == null || room.getUserTwo() == null) {
+            return false;
+        }
+
         User otherUser;
 
         if (room.getUserOne().getId().equals(currentUser.getId())) {
@@ -409,6 +414,37 @@ public class ChatService {
 
                     return chatRoomRepository.save(room);
                 });
+    }
+
+
+    @Transactional
+    public void migrateLegacyChatRooms() {
+
+        List<ChatRoom> rooms = chatRoomRepository.findLegacyTicketRooms();
+
+        for (ChatRoom room : rooms) {
+
+            Ticket ticket = room.getTicket();
+
+            if (ticket == null) {
+                continue;
+            }
+
+            if (ticket.getCustomer() == null
+                    || ticket.getCustomer().getUser() == null) {
+                continue;
+            }
+
+            if (ticket.getAssignedSupportEmployee() == null
+                    || ticket.getAssignedSupportEmployee().getUser() == null) {
+                continue;
+            }
+
+            room.setUserOne(ticket.getCustomer().getUser());
+            room.setUserTwo(
+                    ticket.getAssignedSupportEmployee().getUser()
+            );
+        }
     }
 
 }

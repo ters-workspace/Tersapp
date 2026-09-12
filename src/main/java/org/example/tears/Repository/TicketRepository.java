@@ -46,4 +46,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer> {
             LocalDateTime start,
             LocalDateTime end
     );
+
+    List<Ticket> findByStatusOrderByCreatedAtDesc(
+            TicketStatus status
+    );
 }

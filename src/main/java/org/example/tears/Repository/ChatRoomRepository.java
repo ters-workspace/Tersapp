@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -28,4 +29,13 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Integer> {
             Integer user1Id,
             Integer user2Id
     );
+
+    @Query("""
+    SELECT c
+    FROM ChatRoom c
+    WHERE c.ticket IS NOT NULL
+    AND c.userOne IS NULL
+    AND c.userTwo IS NULL
+""")
+    List<ChatRoom> findLegacyTicketRooms();
 }

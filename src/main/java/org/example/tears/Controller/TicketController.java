@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tears.Api.ApiResponse;
 import org.example.tears.DTO.*;
+import org.example.tears.Enums.TicketStatus;
 import org.example.tears.Model.ChatRoom;
 import org.example.tears.Model.User;
 import org.example.tears.Service.AuthService;
@@ -117,17 +118,13 @@ public class TicketController {
 
     @GetMapping("/support/all-ticket")
     public ApiResponse getSupportTickets(
-            HttpServletRequest request
-    ){
-
+            HttpServletRequest request,
+            @RequestParam(required = false) TicketStatus status
+    ) {
         return new ApiResponse(
-
                 true,
-
                 "تم جلب التذاكر",
-
-                ticketService.getSupportTickets(request)
-
+                ticketService.getSupportTickets(request, status)
         );
     }
 

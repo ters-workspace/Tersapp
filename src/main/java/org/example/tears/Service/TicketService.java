@@ -595,20 +595,28 @@ public class TicketService {
     }
 
     public List<TicketListDto> getSupportTickets(
-            HttpServletRequest request
-    ){
+            HttpServletRequest request,
+            TicketStatus status
+    ) {
 
         User user = authService.getAuthenticatedUser(request);
 
-        if(user.getEmployee()==null ||
-                user.getEmployee().getEmployeeRole()!=EmployeeRole.SUPPORT){
+        if (user.getEmployee() == null ||
+                user.getEmployee().getEmployeeRole() != EmployeeRole.SUPPORT) {
 
             throw new ApiException("غير مصرح");
         }
 
-        return ticketRepository
-                .findAllByOrderByCreatedAtDesc()
-                .stream()
+        List<Ticket> tickets;
+
+        if (status == null) {
+            tickets = ticketRepository.findAllByOrderByCreatedAtDesc();
+        } else {
+            tickets = ticketRepository
+                    .findByStatusOrderByCreatedAtDesc(status);
+        }
+
+        return tickets.stream()
                 .map(this::toListDto)
                 .toList();
     }
@@ -632,13 +640,6 @@ public class TicketService {
                         .getFullName()
         );
 
-        dto.setCarModel(
-                ticket.getRequest()
-                        .getCar()
-                        .getModel()
-                        .getNameAr()
-        );
-
         dto.setProblemType(ticket.getProblemType());
 
         dto.setDescription(ticket.getDescription());
@@ -653,14 +654,6 @@ public class TicketService {
 
         dto.setCreatedAt(ticket.getCreatedAt());
 
-        if(ticket.getAssignedSupportEmployee()!=null){
-
-            dto.setAssignedSupportEmployeeName(
-                    ticket.getAssignedSupportEmployee()
-                            .getUser()
-                            .getFullName()
-            );
-        }
 
         if (ticket.getCreatedByEmployee() != null &&
                 ticket.getCreatedByEmployee().getUser() != null) {

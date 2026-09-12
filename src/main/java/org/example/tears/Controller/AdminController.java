@@ -29,6 +29,7 @@ public class AdminController {
     private final RequestQueryService requestQueryService;
     private final AuthService authService;
     private final DashboardService dashboardService;
+    private final ChatService chatService;
 
     @GetMapping("/get")
     public ApiResponse getDashboard() {
@@ -170,4 +171,15 @@ public class AdminController {
             return adminService.deactivateEmployee(id);
         }
 
+
+    @PostMapping("/admin/migrate-legacy-rooms")
+    public ApiResponse migrateLegacyRooms() {
+
+        chatService.migrateLegacyChatRooms();
+
+        return new ApiResponse(
+                true,
+                "تم تحديث غرف المحادثات القديمة"
+        );
+    }
 }

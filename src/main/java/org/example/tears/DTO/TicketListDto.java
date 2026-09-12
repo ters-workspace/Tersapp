@@ -20,8 +20,6 @@ public class TicketListDto {
 
     private String customerName;
 
-    private String carModel;
-
     private TicketProblemType problemType;
 
     private String description;
@@ -33,7 +31,6 @@ public class TicketListDto {
     private Boolean acceptedByCustomerService;
 
     private String createdByEmployeeName;
-    private String assignedSupportEmployeeName;
 
     private LocalDateTime createdAt;
 }
