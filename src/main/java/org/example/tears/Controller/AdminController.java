@@ -70,7 +70,7 @@ public class AdminController {
         return new ApiResponse(true, "تم الإسناد");
     }
 
-    @GetMapping("/employees")
+    @GetMapping("/all/employees")
     public List<EmployeeListDto> employees() {
         return adminService.getAllEmployees();
     }
