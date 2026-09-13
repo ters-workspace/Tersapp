@@ -25,7 +25,49 @@ public class WebSocketEventListener {
     private final ChatRoomRepository chatRoomRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final WebSocketSessionRegistry sessionRegistry;
+    @EventListener
+    public void handleConnect(SessionConnectEvent event) {
 
+        System.out.println("========== WEBSOCKET CONNECT EVENT ==========");
+
+        StompHeaderAccessor accessor =
+                StompHeaderAccessor.wrap(event.getMessage());
+
+        String sessionId = accessor.getSessionId();
+
+        System.out.println("SESSION = " + sessionId);
+
+        User user = sessionRegistry.getUser(sessionId);
+
+        System.out.println("USER FROM SESSION = " + user);
+
+        if (user == null) {
+            System.out.println(
+                    "PRESENCE CONNECT: USER NOT FOUND IN SESSION REGISTRY"
+            );
+            return;
+        }
+
+        System.out.println(
+                "PRESENCE CONNECT USER = "
+                        + user.getId()
+                        + " | "
+                        + user.getPhoneNumber()
+                        + " | SESSION = "
+                        + sessionId
+        );
+
+        boolean becameOnline =
+                presenceService.online(user.getPhoneNumber());
+
+        System.out.println(
+                "BECAME ONLINE = " + becameOnline
+        );
+
+        if (becameOnline) {
+            broadcastPresence(user, true);
+        }
+    }
 
     @EventListener
     public void handleDisconnect(SessionDisconnectEvent event) {

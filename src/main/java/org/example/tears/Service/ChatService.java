@@ -327,22 +327,37 @@ public class ChatService {
         );
     }
 
-    public void sendTyping(
-            TypingDto dto,
-            String phone
-    ) {
+    public void sendTyping(TypingDto dto, String phone) {
+
+        System.out.println("========== SEND TYPING ==========");
+        System.out.println("PHONE = " + phone);
+        System.out.println("ROOM ID = " + dto.getRoomId());
+        System.out.println("TYPING = " + dto.getTyping());
 
         User sender = userRepo.findByPhoneNumber(phone)
                 .orElseThrow(() ->
-                        new ApiException("المستخدم غير موجود"));
+                        new ApiException("المستخدم غير موجود")
+                );
 
-        ChatRoom room = getRoom(
-                dto.getRoomId(),
-                sender
+        System.out.println(
+                "SENDER ID = " + sender.getId()
+        );
+
+        ChatRoom room = getRoom(dto.getRoomId(), sender);
+
+        System.out.println(
+                "ROOM FOUND = " + room.getId()
+        );
+
+        String destination =
+                "/topic/chat/" + room.getId() + "/typing";
+
+        System.out.println(
+                "TYPING DESTINATION = " + destination
         );
 
         messagingTemplate.convertAndSend(
-                "/topic/chat/" + room.getId() + "/typing",
+                destination,
                 Map.of(
                         "type", "TYPING",
                         "roomId", room.getId(),
@@ -350,6 +365,10 @@ public class ChatService {
                         "senderName", sender.getFullName(),
                         "typing", dto.getTyping()
                 )
+        );
+
+        System.out.println(
+                "TYPING SENT SUCCESSFULLY"
         );
     }
 

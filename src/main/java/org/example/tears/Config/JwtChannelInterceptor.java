@@ -3,15 +3,11 @@ package org.example.tears.Config;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
-import org.example.tears.Model.ChatRoom;
 import org.example.tears.Model.JwtUtil;
 import org.example.tears.Model.User;
-import org.example.tears.Repository.ChatRoomRepository;
 import org.example.tears.Repository.UserRepository;
-import org.example.tears.Service.PresenceService;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -20,7 +16,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor

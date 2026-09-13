@@ -40,11 +40,16 @@ public class ChatSocketController {
     }
 
     @MessageMapping("/chat.typing")
-    public void typing(
-            @Payload TypingDto dto,
-            Principal principal
-    ) {
+    public void typing(@Payload TypingDto dto, Principal principal) {
+
+        System.out.println("========== TYPING RECEIVED ==========");
+        System.out.println("ROOM ID = " + dto.getRoomId());
+        System.out.println("TYPING = " + dto.getTyping());
+        System.out.println("PRINCIPAL = " + principal);
+
         chatService.sendTyping(dto, principal.getName());
+
+        System.out.println("========== TYPING HANDLED ==========");
     }
 
     @MessageMapping("/chat.delete")
