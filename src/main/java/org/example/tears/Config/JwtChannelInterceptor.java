@@ -1,21 +1,26 @@
 package org.example.tears.Config;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
+import org.example.tears.Model.ChatRoom;
 import org.example.tears.Model.JwtUtil;
 import org.example.tears.Model.User;
+import org.example.tears.Repository.ChatRoomRepository;
 import org.example.tears.Repository.UserRepository;
+import org.example.tears.Service.PresenceService;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
 
 import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -24,6 +29,9 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final WebSocketSessionRegistry sessionRegistry;
+    private final PresenceService presenceService;
+    private final ChatRoomRepository chatRoomRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     public Message<?> preSend(
@@ -103,14 +111,42 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
 
             accessor.setUser(authentication);
 
-            // حفظ المستخدم مع WebSocket session
-            String sessionId = accessor.getSessionId();
+            String sessionId =
+                    accessor.getSessionId();
 
+            // حفظ المستخدم مع WebSocket session
             if (sessionId != null) {
                 sessionRegistry.register(
                         sessionId,
                         user
                 );
+            }
+
+            // تحديث حالة المستخدم إلى Online
+            boolean becameOnline =
+                    presenceService.online(
+                            user.getPhoneNumber()
+                    );
+
+            // إرسال Presence فقط عند أول اتصال للمستخدم
+            if (becameOnline) {
+
+                List<ChatRoom> rooms =
+                        chatRoomRepository.findAllRoomsForUser(
+                                user.getId()
+                        );
+
+                for (ChatRoom room : rooms) {
+
+                    messagingTemplate.convertAndSend(
+                            "/topic/chat/" + room.getId(),
+                            Map.of(
+                                    "type", "PRESENCE",
+                                    "userId", user.getId(),
+                                    "online", true
+                            )
+                    );
+                }
             }
 
             System.out.println(

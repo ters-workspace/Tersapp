@@ -28,123 +28,25 @@ public class WebSocketEventListener {
 
 
     @EventListener
-    public void handleConnect(SessionConnectEvent event) {
-
-        System.out.println(
-                "========== WEBSOCKET CONNECT EVENT =========="
-        );
+    public void handleDisconnect(SessionDisconnectEvent event) {
 
         StompHeaderAccessor accessor =
                 StompHeaderAccessor.wrap(event.getMessage());
 
-        Principal principal = accessor.getUser();
+        String sessionId = accessor.getSessionId();
 
-        System.out.println(
-                "Principal = " + principal
-        );
-
-        if (principal instanceof Authentication authentication) {
-
-            User user =
-                    (User) authentication.getPrincipal();
-
-            String sessionId =
-                    accessor.getSessionId();
-
-            System.out.println(
-                    "PRESENCE CONNECT USER = "
-                            + user.getId()
-                            + " | "
-                            + user.getPhoneNumber()
-                            + " | SESSION = "
-                            + sessionId
-            );
-
-            boolean becameOnline =
-                    presenceService.online(
-                            user.getPhoneNumber()
-                    );
-
-            System.out.println(
-                    "BECAME ONLINE = " + becameOnline
-            );
-
-            if (becameOnline) {
-
-                broadcastPresence(
-                        user,
-                        true
-                );
-            }
-
-        } else {
-
-            System.out.println(
-                    "PRESENCE CONNECT: PRINCIPAL IS NULL OR INVALID"
-            );
-        }
-    }
-
-
-    @EventListener
-    public void handleDisconnect(
-            SessionDisconnectEvent event
-    ) {
-
-        System.out.println(
-                "========== WEBSOCKET DISCONNECT EVENT =========="
-        );
-
-        StompHeaderAccessor accessor =
-                StompHeaderAccessor.wrap(event.getMessage());
-
-        String sessionId =
-                accessor.getSessionId();
-
-        System.out.println(
-                "SESSION = " + sessionId
-        );
-
-        User user =
-                sessionRegistry.getUser(sessionId);
-
-        System.out.println(
-                "USER FROM SESSION = " + user
-        );
+        User user = sessionRegistry.getUser(sessionId);
 
         if (user != null) {
 
-            System.out.println(
-                    "PRESENCE DISCONNECT USER = "
-                            + user.getId()
-                            + " | "
-                            + user.getPhoneNumber()
-            );
-
             boolean becameOffline =
-                    presenceService.offline(
-                            user.getPhoneNumber()
-                    );
-
-            System.out.println(
-                    "BECAME OFFLINE = " + becameOffline
-            );
+                    presenceService.offline(user.getPhoneNumber());
 
             if (becameOffline) {
-
-                broadcastPresence(
-                        user,
-                        false
-                );
+                broadcastPresence(user, false);
             }
 
             sessionRegistry.remove(sessionId);
-
-        } else {
-
-            System.out.println(
-                    "PRESENCE DISCONNECT: USER NOT FOUND FOR SESSION"
-            );
         }
     }
 
