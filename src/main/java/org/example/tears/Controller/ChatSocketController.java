@@ -2,6 +2,8 @@ package org.example.tears.Controller;
 
 
 import lombok.AllArgsConstructor;
+import org.example.tears.Api.ApiException;
+import org.example.tears.Config.WebSocketSessionRegistry;
 import org.example.tears.DTO.DeleteMessageDto;
 import org.example.tears.DTO.SendMessageDto;
 import org.example.tears.DTO.TypingDto;
@@ -9,6 +11,7 @@ import org.example.tears.Model.User;
 import org.example.tears.Service.ChatService;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 
@@ -19,6 +22,7 @@ import java.security.Principal;
 public class ChatSocketController {
 
     private final ChatService chatService;
+    private final WebSocketSessionRegistry sessionRegistry;
 
     @MessageMapping("/chat.send")
     public void send(
@@ -40,16 +44,23 @@ public class ChatSocketController {
     }
 
     @MessageMapping("/chat.typing")
-    public void typing(@Payload TypingDto dto, Principal principal) {
+    public void typing(
+            @Payload TypingDto dto,
+            StompHeaderAccessor accessor
+    ) {
 
-        System.out.println("========== TYPING RECEIVED ==========");
-        System.out.println("ROOM ID = " + dto.getRoomId());
-        System.out.println("TYPING = " + dto.getTyping());
-        System.out.println("PRINCIPAL = " + principal);
+        String sessionId = accessor.getSessionId();
 
-        chatService.sendTyping(dto, principal.getName());
+        User user = sessionRegistry.getUser(sessionId);
 
-        System.out.println("========== TYPING HANDLED ==========");
+        if (user == null) {
+            throw new ApiException("المستخدم غير موجود");
+        }
+
+        chatService.sendTyping(
+                dto,
+                user.getPhoneNumber()
+        );
     }
 
     @MessageMapping("/chat.delete")
