@@ -344,8 +344,10 @@ public class ChatService {
         messagingTemplate.convertAndSend(
                 "/topic/chat/" + room.getId() + "/typing",
                 Map.of(
-                        "userId", sender.getId(),
-                        "userName", sender.getFullName(),
+                        "type", "TYPING",
+                        "roomId", room.getId(),
+                        "senderId", sender.getId(),
+                        "senderName", sender.getFullName(),
                         "typing", dto.getTyping()
                 )
         );
