@@ -29,20 +29,35 @@ public class WebSocketEventListener {
     @EventListener
     public void handleConnect(SessionConnectedEvent event) {
 
+        System.out.println("========== WEBSOCKET CONNECT EVENT ==========");
+
         StompHeaderAccessor accessor =
                 StompHeaderAccessor.wrap(event.getMessage());
 
         Principal principal = accessor.getUser();
+
+        System.out.println("Principal = " + principal);
 
         if (principal instanceof Authentication authentication) {
 
             User user =
                     (User) authentication.getPrincipal();
 
+            System.out.println(
+                    "PRESENCE CONNECT USER = "
+                            + user.getId()
+                            + " | "
+                            + user.getPhoneNumber()
+            );
+
             boolean becameOnline =
                     presenceService.online(
                             user.getPhoneNumber()
                     );
+
+            System.out.println(
+                    "BECAME ONLINE = " + becameOnline
+            );
 
             if (becameOnline) {
 
@@ -51,6 +66,11 @@ public class WebSocketEventListener {
                         true
                 );
             }
+        } else {
+
+            System.out.println(
+                    "PRESENCE CONNECT: PRINCIPAL IS NULL OR INVALID"
+            );
         }
     }
 
@@ -58,20 +78,35 @@ public class WebSocketEventListener {
     @EventListener
     public void handleDisconnect(SessionDisconnectEvent event) {
 
+        System.out.println("========== WEBSOCKET DISCONNECT EVENT ==========");
+
         StompHeaderAccessor accessor =
                 StompHeaderAccessor.wrap(event.getMessage());
 
         Principal principal = accessor.getUser();
+
+        System.out.println("Principal = " + principal);
 
         if (principal instanceof Authentication authentication) {
 
             User user =
                     (User) authentication.getPrincipal();
 
+            System.out.println(
+                    "PRESENCE DISCONNECT USER = "
+                            + user.getId()
+                            + " | "
+                            + user.getPhoneNumber()
+            );
+
             boolean becameOffline =
                     presenceService.offline(
                             user.getPhoneNumber()
                     );
+
+            System.out.println(
+                    "BECAME OFFLINE = " + becameOffline
+            );
 
             if (becameOffline) {
 
@@ -80,6 +115,11 @@ public class WebSocketEventListener {
                         false
                 );
             }
+        } else {
+
+            System.out.println(
+                    "PRESENCE DISCONNECT: PRINCIPAL IS NULL OR INVALID"
+            );
         }
     }
 
@@ -89,12 +129,30 @@ public class WebSocketEventListener {
             boolean online
     ) {
 
+        System.out.println(
+                "========== BROADCAST PRESENCE =========="
+        );
+
+        System.out.println(
+                "USER ID = " + user.getId()
+                        + " | ONLINE = " + online
+        );
+
         List<ChatRoom> rooms =
                 chatRoomRepository.findAllRoomsForUser(
                         user.getId()
                 );
 
+        System.out.println(
+                "ROOMS FOUND = " + rooms.size()
+        );
+
         for (ChatRoom room : rooms) {
+
+            System.out.println(
+                    "PUBLISH PRESENCE -> /topic/chat/"
+                            + room.getId()
+            );
 
             messagingTemplate.convertAndSend(
                     "/topic/chat/" + room.getId(),
