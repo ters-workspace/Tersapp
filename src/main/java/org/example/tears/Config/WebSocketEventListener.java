@@ -10,7 +10,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.messaging.SessionConnectedEvent;
+import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.security.Principal;
@@ -24,30 +24,40 @@ public class WebSocketEventListener {
     private final PresenceService presenceService;
     private final ChatRoomRepository chatRoomRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final WebSocketSessionRegistry sessionRegistry;
 
 
     @EventListener
-    public void handleConnect(SessionConnectedEvent event) {
+    public void handleConnect(SessionConnectEvent event) {
 
-        System.out.println("========== WEBSOCKET CONNECT EVENT ==========");
+        System.out.println(
+                "========== WEBSOCKET CONNECT EVENT =========="
+        );
 
         StompHeaderAccessor accessor =
                 StompHeaderAccessor.wrap(event.getMessage());
 
         Principal principal = accessor.getUser();
 
-        System.out.println("Principal = " + principal);
+        System.out.println(
+                "Principal = " + principal
+        );
 
         if (principal instanceof Authentication authentication) {
 
             User user =
                     (User) authentication.getPrincipal();
 
+            String sessionId =
+                    accessor.getSessionId();
+
             System.out.println(
                     "PRESENCE CONNECT USER = "
                             + user.getId()
                             + " | "
                             + user.getPhoneNumber()
+                            + " | SESSION = "
+                            + sessionId
             );
 
             boolean becameOnline =
@@ -66,6 +76,7 @@ public class WebSocketEventListener {
                         true
                 );
             }
+
         } else {
 
             System.out.println(
@@ -76,21 +87,32 @@ public class WebSocketEventListener {
 
 
     @EventListener
-    public void handleDisconnect(SessionDisconnectEvent event) {
+    public void handleDisconnect(
+            SessionDisconnectEvent event
+    ) {
 
-        System.out.println("========== WEBSOCKET DISCONNECT EVENT ==========");
+        System.out.println(
+                "========== WEBSOCKET DISCONNECT EVENT =========="
+        );
 
         StompHeaderAccessor accessor =
                 StompHeaderAccessor.wrap(event.getMessage());
 
-        Principal principal = accessor.getUser();
+        String sessionId =
+                accessor.getSessionId();
 
-        System.out.println("Principal = " + principal);
+        System.out.println(
+                "SESSION = " + sessionId
+        );
 
-        if (principal instanceof Authentication authentication) {
+        User user =
+                sessionRegistry.getUser(sessionId);
 
-            User user =
-                    (User) authentication.getPrincipal();
+        System.out.println(
+                "USER FROM SESSION = " + user
+        );
+
+        if (user != null) {
 
             System.out.println(
                     "PRESENCE DISCONNECT USER = "
@@ -115,10 +137,13 @@ public class WebSocketEventListener {
                         false
                 );
             }
+
+            sessionRegistry.remove(sessionId);
+
         } else {
 
             System.out.println(
-                    "PRESENCE DISCONNECT: PRINCIPAL IS NULL OR INVALID"
+                    "PRESENCE DISCONNECT: USER NOT FOUND FOR SESSION"
             );
         }
     }
@@ -134,8 +159,10 @@ public class WebSocketEventListener {
         );
 
         System.out.println(
-                "USER ID = " + user.getId()
-                        + " | ONLINE = " + online
+                "USER ID = "
+                        + user.getId()
+                        + " | ONLINE = "
+                        + online
         );
 
         List<ChatRoom> rooms =

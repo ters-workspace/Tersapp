@@ -23,6 +23,7 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final WebSocketSessionRegistry sessionRegistry;
 
     @Override
     public Message<?> preSend(
@@ -33,17 +34,11 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
         StompHeaderAccessor accessor =
                 StompHeaderAccessor.wrap(message);
 
-        // Only authenticate CONNECT
         if (!StompCommand.CONNECT.equals(
                 accessor.getCommand()
         )) {
-
             return message;
         }
-
-        // =========================
-        // GET AUTHORIZATION
-        // =========================
 
         String auth =
                 accessor.getFirstNativeHeader(
@@ -62,10 +57,6 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
 
         try {
 
-            // =========================
-            // TOKEN TYPE
-            // =========================
-
             String tokenType =
                     jwtUtil.getTokenType(token);
 
@@ -76,16 +67,8 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
                 );
             }
 
-            // =========================
-            // PHONE
-            // =========================
-
             String phone =
                     jwtUtil.getPhoneFromToken(token);
-
-            // =========================
-            // ROLE
-            // =========================
 
             String role =
                     jwtUtil.getRoleFromToken(token);
@@ -98,10 +81,6 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
                 );
             }
 
-            // =========================
-            // USER
-            // =========================
-
             User user =
                     userRepository
                             .findByPhoneNumber(phone)
@@ -110,10 +89,6 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
                                             "ACCESS_TOKEN_INVALID"
                                     )
                             );
-
-            // =========================
-            // AUTHENTICATION
-            // =========================
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
@@ -128,34 +103,35 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
 
             accessor.setUser(authentication);
 
+            // حفظ المستخدم مع WebSocket session
+            String sessionId = accessor.getSessionId();
+
+            if (sessionId != null) {
+                sessionRegistry.register(
+                        sessionId,
+                        user
+                );
+            }
+
             System.out.println(
                     "WEBSOCKET CONNECT: "
                             + phone
                             + " | ROLE: "
                             + role
+                            + " | SESSION: "
+                            + sessionId
             );
 
             return message;
 
-        }
-
-        // =========================
-        // EXPIRED
-        // =========================
-
-        catch (ExpiredJwtException e) {
+        } catch (ExpiredJwtException e) {
 
             throw new IllegalArgumentException(
                     "ACCESS_TOKEN_EXPIRED"
             );
-        }
 
-        // =========================
-        // INVALID
-        // =========================
-
-        catch (JwtException |
-               IllegalArgumentException e) {
+        } catch (JwtException |
+                 IllegalArgumentException e) {
 
             throw new IllegalArgumentException(
                     "ACCESS_TOKEN_INVALID"
