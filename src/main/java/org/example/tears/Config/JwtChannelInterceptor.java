@@ -29,9 +29,6 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final WebSocketSessionRegistry sessionRegistry;
-    private final PresenceService presenceService;
-    private final ChatRoomRepository chatRoomRepository;
-    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     public Message<?> preSend(
@@ -110,43 +107,10 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
                     );
 
             accessor.setUser(authentication);
+            String sessionId = accessor.getSessionId();
 
-            String sessionId =
-                    accessor.getSessionId();
-
-            // حفظ المستخدم مع WebSocket session
             if (sessionId != null) {
-                sessionRegistry.register(
-                        sessionId,
-                        user
-                );
-            }
-
-            // تحديث حالة المستخدم إلى Online
-            boolean becameOnline =
-                    presenceService.online(
-                            user.getPhoneNumber()
-                    );
-
-            // إرسال Presence فقط عند أول اتصال للمستخدم
-            if (becameOnline) {
-
-                List<ChatRoom> rooms =
-                        chatRoomRepository.findAllRoomsForUser(
-                                user.getId()
-                        );
-
-                for (ChatRoom room : rooms) {
-
-                    messagingTemplate.convertAndSend(
-                            "/topic/chat/" + room.getId(),
-                            Map.of(
-                                    "type", "PRESENCE",
-                                    "userId", user.getId(),
-                                    "online", true
-                            )
-                    );
-                }
+                sessionRegistry.register(sessionId, user);
             }
 
             System.out.println(
