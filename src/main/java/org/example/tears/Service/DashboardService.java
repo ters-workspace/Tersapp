@@ -19,6 +19,16 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.chrono.HijrahDate;
+import java.time.temporal.ChronoField;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
@@ -1302,5 +1312,246 @@ public class DashboardService {
         return contacts;
     }
 
+    public StatisticsDto getStatistics(Integer hijriMonth, Integer hijriYear) {
 
+        HijrahDate todayHijri = HijrahDate.now();
+
+        int currentHijriYear = todayHijri.get(ChronoField.YEAR_OF_ERA);
+        int currentHijriMonth = todayHijri.get(ChronoField.MONTH_OF_YEAR);
+
+        if (hijriYear == null) {
+            hijriYear = currentHijriYear;
+        }
+
+        if (hijriMonth == null) {
+            hijriMonth = currentHijriMonth;
+        }
+
+        // Current selected month
+        LocalDateTime currentMonthStart = getHijriMonthStart(hijriYear, hijriMonth);
+        LocalDateTime currentMonthEnd = getHijriMonthEnd(hijriYear, hijriMonth);
+
+        // Previous month
+        HijrahDate previousHijriMonth = HijrahDate.of(hijriYear, hijriMonth, 1)
+                .minus(1, java.time.temporal.ChronoUnit.MONTHS);
+
+        int previousYear = previousHijriMonth.get(ChronoField.YEAR_OF_ERA);
+        int previousMonth = previousHijriMonth.get(ChronoField.MONTH_OF_YEAR);
+
+        LocalDateTime previousMonthStart =
+                getHijriMonthStart(previousYear, previousMonth);
+
+        LocalDateTime previousMonthEnd =
+                getHijriMonthEnd(previousYear, previousMonth);
+
+        // Orders
+        long currentOrders =
+                requestRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                        currentMonthStart,
+                        currentMonthEnd
+                );
+
+        long previousOrders =
+                requestRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                        previousMonthStart,
+                        previousMonthEnd
+                );
+
+        BigDecimal ordersGrowthPercentage =
+                calculateGrowthPercentage(currentOrders, previousOrders);
+
+        // Customers
+        long activeCustomers =
+                userRepository.countByRoleAndStatus(
+                        UserRole.CUSTOMER,
+                        UserStatus.ACTIVE
+                );
+
+        long newCustomersThisMonth =
+                userRepository.countByRoleAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                        UserRole.CUSTOMER,
+                        currentMonthStart,
+                        currentMonthEnd
+                );
+
+        // Revenue
+        BigDecimal monthlyRevenue =
+                requestRepository.sumFinalPriceBetween(
+                        currentMonthStart,
+                        currentMonthEnd
+                );
+
+        BigDecimal previousMonthRevenue =
+                requestRepository.sumFinalPriceBetween(
+                        previousMonthStart,
+                        previousMonthEnd
+                );
+
+        BigDecimal revenueGrowthPercentage =
+                calculateGrowthPercentage(
+                        monthlyRevenue,
+                        previousMonthRevenue
+                );
+
+        // Monthly chart
+        List<MonthlyStatisticsDto> monthlyStatistics =
+                getMonthlyStatistics(hijriYear);
+
+        // Hourly chart
+        List<HourlyOrdersDto> hourlyOrders =
+                getHourlyOrders(currentMonthStart, currentMonthEnd);
+
+        return new StatisticsDto(
+                currentOrders,
+                ordersGrowthPercentage,
+                activeCustomers,
+                newCustomersThisMonth,
+                monthlyRevenue,
+                revenueGrowthPercentage,
+                monthlyStatistics,
+                hourlyOrders
+        );
+    }
+
+    private LocalDateTime getHijriMonthStart(int hijriYear, int hijriMonth) {
+
+        HijrahDate hijriDate =
+                HijrahDate.of(hijriYear, hijriMonth, 1);
+
+        LocalDate date =
+                LocalDate.ofEpochDay(hijriDate.toEpochDay());
+
+        return date.atStartOfDay();
+    }
+
+    private LocalDateTime getHijriMonthEnd(int hijriYear, int hijriMonth) {
+
+        HijrahDate nextMonth =
+                HijrahDate.of(hijriYear, hijriMonth, 1)
+                        .plus(1, java.time.temporal.ChronoUnit.MONTHS);
+
+        LocalDate date =
+                LocalDate.ofEpochDay(nextMonth.toEpochDay());
+
+        return date.atStartOfDay();
+    }
+
+    private List<MonthlyStatisticsDto> getMonthlyStatistics(int hijriYear) {
+
+        List<MonthlyStatisticsDto> statistics = new ArrayList<>();
+
+        for (int month = 1; month <= 12; month++) {
+
+            LocalDateTime start =
+                    getHijriMonthStart(hijriYear, month);
+
+            LocalDateTime end =
+                    getHijriMonthEnd(hijriYear, month);
+
+            long orders =
+                    requestRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                            start,
+                            end
+                    );
+
+            BigDecimal revenue =
+                    requestRepository.sumFinalPriceBetween(
+                            start,
+                            end
+                    );
+
+            statistics.add(
+                    new MonthlyStatisticsDto(
+                            month,
+                            HIJRI_MONTH_NAMES[month - 1],
+                            orders,
+                            revenue
+                    )
+            );
+        }
+
+        return statistics;
+    }
+
+    private static final String[] HIJRI_MONTH_NAMES = {
+            "محرم",
+            "صفر",
+            "ربيع الأول",
+            "ربيع الآخر",
+            "جمادى الأولى",
+            "جمادى الآخرة",
+            "رجب",
+            "شعبان",
+            "رمضان",
+            "شوال",
+            "ذو القعدة",
+            "ذو الحجة"
+    };
+
+    private List<HourlyOrdersDto> getHourlyOrders(
+            LocalDateTime start,
+            LocalDateTime end
+    ) {
+
+        List<Object[]> results =
+                requestRepository.countOrdersByHour(start, end);
+
+        Map<Integer, Long> ordersByHour = new HashMap<>();
+
+        for (Object[] result : results) {
+
+            Integer hour = ((Number) result[0]).intValue();
+            Long count = ((Number) result[1]).longValue();
+
+            ordersByHour.put(hour, count);
+        }
+
+        List<HourlyOrdersDto> hourlyOrders = new ArrayList<>();
+
+        for (int hour = 0; hour < 24; hour++) {
+
+            long orders = ordersByHour.getOrDefault(hour, 0L);
+
+            String time = String.format("%02d:00", hour);
+
+            hourlyOrders.add(
+                    new HourlyOrdersDto(
+                            hour,
+                            time,
+                            orders
+                    )
+            );
+        }
+
+        return hourlyOrders;
+    }
+
+    private BigDecimal calculateGrowthPercentage(
+            BigDecimal current,
+            BigDecimal previous
+    ) {
+
+        if (previous == null) {
+            previous = BigDecimal.ZERO;
+        }
+
+        if (current == null) {
+            current = BigDecimal.ZERO;
+        }
+
+        if (previous.compareTo(BigDecimal.ZERO) == 0) {
+
+            if (current.compareTo(BigDecimal.ZERO) == 0) {
+                return BigDecimal.ZERO;
+            }
+
+            return BigDecimal.valueOf(100);
+        }
+
+        return current
+                .subtract(previous)
+                .divide(previous, 4, java.math.RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100))
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+    }
 }

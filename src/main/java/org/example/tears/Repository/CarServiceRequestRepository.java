@@ -215,4 +215,29 @@ WHERE
             @Param("status") StaffRequestStatus status
     );
 
+
+    @Query("""
+    SELECT COALESCE(SUM(r.finalPrice), 0)
+    FROM CarServiceRequest r
+    WHERE r.finalPrice IS NOT NULL
+    AND r.createdAt >= :start
+    AND r.createdAt < :end
+""")
+    BigDecimal sumFinalPriceBetween(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+    @Query("""
+    SELECT HOUR(r.createdAt), COUNT(r)
+    FROM CarServiceRequest r
+    WHERE r.createdAt >= :start
+    AND r.createdAt < :end
+    GROUP BY HOUR(r.createdAt)
+    ORDER BY HOUR(r.createdAt)
+""")
+    List<Object[]> countOrdersByHour(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 }

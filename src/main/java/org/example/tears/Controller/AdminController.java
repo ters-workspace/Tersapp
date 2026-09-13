@@ -6,11 +6,12 @@ import org.example.tears.Api.ApiResponse;
 import org.example.tears.DTO.*;
 import org.example.tears.Enums.DashboardSection;
 import org.example.tears.InpDTO.AdminCreateEmployeeDTO;
-import org.example.tears.Model.Appointment;
-import org.example.tears.Model.Employee;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.http.ResponseEntity;
+import org.example.tears.DTO.StatisticsDto;
 import org.example.tears.OutDTO.EmployeeLoginInfo;
 import org.example.tears.Service.*;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -180,6 +181,16 @@ public class AdminController {
         return new ApiResponse(
                 true,
                 "تم تحديث غرف المحادثات القديمة"
+        );
+    }
+
+    @GetMapping("/statistics")
+    public ResponseEntity<StatisticsDto> getStatistics(
+            @RequestParam(required = false) Integer hijriMonth,
+            @RequestParam(required = false) Integer hijriYear
+    ) {
+        return ResponseEntity.ok(
+                dashboardService.getStatistics(hijriMonth, hijriYear)
         );
     }
 }
