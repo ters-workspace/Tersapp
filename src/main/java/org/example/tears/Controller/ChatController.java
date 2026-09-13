@@ -168,5 +168,19 @@ public class ChatController {
         );
     }
 
+    @GetMapping("/my-rooms")
+    public ApiResponse getMyRooms(
+            HttpServletRequest request
+    ) {
+
+        User user = authService.getAuthenticatedUser(request);
+
+        return new ApiResponse(
+                true,
+                "تم جلب المحادثات",
+                chatService.getMyRooms(user)
+        );
+    }
+
 
 }

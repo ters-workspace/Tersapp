@@ -1,5 +1,7 @@
 package org.example.tears.Repository;
 
+import org.example.tears.Enums.ReadStatus;
+import org.example.tears.Model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.example.tears.Model.ChatMessage;
@@ -18,5 +20,14 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Intege
             Pageable pageable
     );
 
+    ChatMessage findTopByChatRoomOrderByCreatedAtDesc(
+            ChatRoom chatRoom
+    );
+
+    long countByChatRoomAndSenderNotAndReadStatus(
+            ChatRoom chatRoom,
+            User sender,
+            ReadStatus readStatus
+    );
 
 }

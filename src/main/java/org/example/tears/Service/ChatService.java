@@ -449,4 +449,122 @@ public class ChatService {
         }
     }
 
+    public List<ChatRoomListDto> getMyRooms(User currentUser) {
+
+        List<ChatRoom> rooms =
+                chatRoomRepository.findAllRoomsForUser(
+                        currentUser.getId()
+                );
+
+        List<ChatRoomListDto> response = new java.util.ArrayList<>();
+
+        for (ChatRoom room : rooms) {
+
+            User otherUser = null;
+
+            if (room.getUserOne() != null &&
+                    room.getUserOne().getId().equals(currentUser.getId())) {
+
+                otherUser = room.getUserTwo();
+
+            } else if (room.getUserTwo() != null &&
+                    room.getUserTwo().getId().equals(currentUser.getId())) {
+
+                otherUser = room.getUserOne();
+
+            } else if (room.getTicket() != null) {
+
+                Ticket ticket = room.getTicket();
+
+                if (ticket.getCustomer() != null &&
+                        ticket.getCustomer().getUser() != null &&
+                        ticket.getCustomer().getUser().getId()
+                                .equals(currentUser.getId())) {
+
+                    if (ticket.getAssignedSupportEmployee() != null) {
+                        otherUser =
+                                ticket.getAssignedSupportEmployee().getUser();
+                    }
+
+                } else if (ticket.getAssignedSupportEmployee() != null &&
+                        ticket.getAssignedSupportEmployee().getUser() != null &&
+                        ticket.getAssignedSupportEmployee().getUser().getId()
+                                .equals(currentUser.getId())) {
+
+                    if (ticket.getCustomer() != null) {
+                        otherUser =
+                                ticket.getCustomer().getUser();
+                    }
+
+                } else if (ticket.getCreatedByEmployee() != null &&
+                        ticket.getCreatedByEmployee().getUser() != null &&
+                        ticket.getCreatedByEmployee().getUser().getId()
+                                .equals(currentUser.getId())) {
+
+                    if (ticket.getAssignedSupportEmployee() != null) {
+                        otherUser =
+                                ticket.getAssignedSupportEmployee().getUser();
+                    }
+                }
+            }
+
+            ChatMessage lastMessage =
+                    chatMessageRepository
+                            .findTopByChatRoomOrderByCreatedAtDesc(room);
+
+            long unreadCount =
+                    chatMessageRepository
+                            .countByChatRoomAndSenderNotAndReadStatus(
+                                    room,
+                                    currentUser,
+                                    ReadStatus.SENT
+                            );
+
+            String lastMessageText = null;
+            String lastMessageType = null;
+            LocalDateTime lastMessageTime = null;
+
+            if (lastMessage != null) {
+                lastMessageText = lastMessage.getMessage();
+
+                if (lastMessage.getType() != null) {
+                    lastMessageType =
+                            lastMessage.getType().name();
+                }
+
+                lastMessageTime =
+                        lastMessage.getCreatedAt();
+            }
+
+            Integer ticketId = null;
+
+            if (room.getTicket() != null) {
+                ticketId = room.getTicket().getId();
+            }
+
+            Integer otherUserId = null;
+            String otherUserName = null;
+
+            if (otherUser != null) {
+                otherUserId = otherUser.getId();
+                otherUserName = otherUser.getFullName();
+            }
+
+            response.add(
+                    new ChatRoomListDto(
+                            room.getId(),
+                            otherUserId,
+                            otherUserName,
+                            ticketId,
+                            lastMessageText,
+                            lastMessageType,
+                            lastMessageTime,
+                            unreadCount
+                    )
+            );
+        }
+
+        return response;
+    }
+
 }

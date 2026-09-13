@@ -2,24 +2,55 @@ package org.example.tears.Service;
 
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class PresenceService {
 
-    private final Set<String> onlineUsers =
-            ConcurrentHashMap.newKeySet();
+    private final ConcurrentMap<String, AtomicInteger> onlineUsers =
+            new ConcurrentHashMap<>();
 
-    public void online(String phone) {
-        onlineUsers.add(phone);
+
+    public boolean online(String phone) {
+
+        AtomicInteger connections =
+                onlineUsers.computeIfAbsent(
+                        phone,
+                        key -> new AtomicInteger(0)
+                );
+
+        return connections.incrementAndGet() == 1;
     }
 
-    public void offline(String phone) {
-        onlineUsers.remove(phone);
+
+    public boolean offline(String phone) {
+
+        AtomicInteger connections =
+                onlineUsers.get(phone);
+
+        if (connections == null) {
+            return false;
+        }
+
+        if (connections.decrementAndGet() <= 0) {
+
+            onlineUsers.remove(phone);
+
+            return true;
+        }
+
+        return false;
     }
+
 
     public boolean isOnline(String phone) {
-        return onlineUsers.contains(phone);
+
+        AtomicInteger connections =
+                onlineUsers.get(phone);
+
+        return connections != null &&
+                connections.get() > 0;
     }
 }
