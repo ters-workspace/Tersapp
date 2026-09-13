@@ -18,16 +18,10 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.chrono.HijrahDate;
 import java.time.temporal.ChronoField;
-import java.util.ArrayList;
+
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -46,8 +40,17 @@ public class DashboardService {
         // REQUESTS
         // =========================
 
-        long totalRequests =
-                requestRepository.count();
+        long totalRequests = requestRepository.count();
+
+        System.out.println("TOTAL CAR SERVICE REQUESTS = " + totalRequests);
+
+        List<CarServiceRequest> requests =
+                requestRepository.findAll();
+
+        System.out.println(
+                "FIND ALL CAR SERVICE REQUESTS = "
+                        + requests.size()
+        );
 
         YearMonth currentMonth =
                 YearMonth.now();
