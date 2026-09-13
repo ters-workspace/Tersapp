@@ -32,14 +32,15 @@ public class ConfigurationSecurity {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/",
-                                "/extract-istimara/**"
+                                "/extract-istimara/**",
+                                "/chat"
                         ).permitAll()
 
-
+                        // ================= AUTH =================
                         .requestMatchers(
                                 "/api/v1/tears/auth/dev/admin-token"
                         ).permitAll()
-
+                        
                         // ================= AUTH =================
                         .requestMatchers("/api/v1/tears/auth/**").permitAll()
 
