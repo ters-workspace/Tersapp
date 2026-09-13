@@ -237,8 +237,9 @@ public class AuthService {
                 .orElseThrow(() ->
                         new ApiException("رقم الجوال غير مسجل"));
 
-        if (user.getEmployee() == null) {
-            throw new ApiException("هذه الخدمة خاصة بالموظفين");
+        if (user.getRole() != UserRole.EMPLOYEE &&
+                user.getRole() != UserRole.ADMIN) {
+            throw new ApiException("هذه الخدمة خاصة بالموظفين والأدمن");
         }
 
         // حالياً مؤقت
@@ -247,19 +248,17 @@ public class AuthService {
     }
 
     @Transactional
-    public VerifyOtpResponse verifyResetPasswordOtp(
-    VerifyOtpDTO dto
-    ) {
+    public VerifyOtpResponse verifyResetPasswordOtp(VerifyOtpDTO dto) {
 
         User user = userRepo.findByPhoneNumber(dto.getPhoneNumber())
                 .orElseThrow(() ->
                         new ApiException("رقم الجوال غير مسجل"));
 
-        if (user.getEmployee() == null) {
-            throw new ApiException("هذه الخدمة خاصة بالموظفين");
+        if (user.getRole() != UserRole.EMPLOYEE &&
+                user.getRole() != UserRole.ADMIN) {
+            throw new ApiException("هذه الخدمة خاصة بالموظفين والأدمن");
         }
 
-        // مؤقت
         if (!dto.getOtp().equals("123456")) {
             throw new ApiException("رمز التحقق غير صحيح");
         }
