@@ -9,28 +9,27 @@ import java.time.LocalDateTime;
 
 @Data
 public class TicketListDto {
+        private Integer id;
 
-    private Integer id;
+        private String ticketNumber;
 
-    private String ticketNumber;
+        private String orderNumber;
 
-    private String orderNumber;
+        private Integer requestId;
 
-    private Integer requestId;
+        private String customerName;
 
-    private String customerName;
+        private TicketProblemType problemType;
 
-    private TicketProblemType problemType;
+        private String description;
 
-    private String description;
+        private TicketPriority priority;
 
-    private TicketPriority priority;
+        private TicketStatus status;
 
-    private TicketStatus status;
+        private Boolean acceptedByCustomerService;
 
-    private Boolean acceptedByCustomerService;
+        private String createdByEmployeeName;
 
-    private String createdByEmployeeName;
-
-    private LocalDateTime createdAt;
-}
+        private LocalDateTime createdAt;
+    }

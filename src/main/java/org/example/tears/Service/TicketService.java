@@ -610,10 +610,17 @@ public class TicketService {
         List<Ticket> tickets;
 
         if (status == null) {
-            tickets = ticketRepository.findAllByOrderByCreatedAtDesc();
+
+            tickets =
+                    ticketRepository.findAllByOrderByCreatedAtDesc();
+
         } else {
-            tickets = ticketRepository
-                    .findByStatusOrderByCreatedAtDesc(status);
+
+            tickets =
+                    ticketRepository
+                            .findByStatusOrderByCreatedAtDesc(
+                                    status
+                            );
         }
 
         return tickets.stream()
