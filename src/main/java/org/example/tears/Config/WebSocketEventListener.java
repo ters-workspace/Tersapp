@@ -25,6 +25,8 @@ public class WebSocketEventListener {
     private final ChatRoomRepository chatRoomRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final WebSocketSessionRegistry sessionRegistry;
+
+
     @EventListener
     public void handleConnect(SessionConnectEvent event) {
 
@@ -64,9 +66,8 @@ public class WebSocketEventListener {
                 "BECAME ONLINE = " + becameOnline
         );
 
-        if (becameOnline) {
-            broadcastPresence(user, true);
-        }
+        // نبث حالة المستخدم في كل اتصال جديد
+        broadcastPresence(user, true);
     }
 
     @EventListener
