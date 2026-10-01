@@ -123,11 +123,9 @@ public class CouponService {
         // Service
         // =========================
 
-        if (coupon.getServiceOption() != null &&
-                coupon.getServiceOption() != option) {
-
+        if (!isServiceApplicable(coupon, option)) {
             throw new ApiException(
-                    "الكوبون غير متاح لهاذي الخدمة"
+                    "هذا الكوبون لا ينطبق على هذه الخدمة"
             );
         }
 
@@ -184,6 +182,15 @@ public class CouponService {
         }
 
         return coupon;
+    }
+
+    private boolean isServiceApplicable(
+            Coupon coupon,
+            ServiceOption serviceOption
+    ) {
+
+        return coupon.getServiceOption() == ServiceOption.ALL
+                || coupon.getServiceOption() == serviceOption;
     }
 
     public List<Coupon> getAll() {

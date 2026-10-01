@@ -7,13 +7,11 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ServiceOption {
 
-
+    ALL("كل الخدمات", 0),
     FULL_MAINTENANCE("صيانة شاملة", 250),
     BODY_PAINT("سمكرة ودهان", 250),
-    ELECTRONIC_CHECK("فحص إلكتروني", 150);//150
+    ELECTRONIC_CHECK("فحص إلكتروني", 150);
 
-    All
     private final String displayName;
     private final int price;
-
 }
