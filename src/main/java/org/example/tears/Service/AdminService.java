@@ -128,9 +128,14 @@ public class AdminService {
         );
 
         return new EmployeeLoginInfo(
+                dto.getFullName(),
                 email,
                 rawPass,
-                dto.getPhoneNumber()
+                dto.getPhoneNumber(),
+                dto.getJobTitle(),
+                dto.getCity(),
+                employee.getEmployeeCode()
+                
         );
     }
 

@@ -12,6 +12,7 @@ public enum ServiceOption {
     BODY_PAINT("سمكرة ودهان", 250),
     ELECTRONIC_CHECK("فحص إلكتروني", 150);//150
 
+    All
     private final String displayName;
     private final int price;
 

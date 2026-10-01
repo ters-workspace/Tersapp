@@ -1,6 +1,7 @@
 package org.example.tears.Model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,7 @@ public class Coupon {
 
         // كود الكوبون
         @Column(unique = true, nullable = false)
+        @NotBlank(message = "لايمكن ترك كوبون الخصم فارغا")
         private String code;
 
         // نسبة خصم %
@@ -44,9 +46,11 @@ public class Coupon {
         private boolean active = true;
 
         // تاريخ الانتهاء
+        @NotBlank(message = "لايمكن ترك تاريخ الانتهاء فارغ")
         private LocalDate expiryDate;
 
         // عدد مرات الاستخدام المسموحة
+        @NotBlank(message = "لايمكن ترك عدد مرات استخدام الكوبون فارغه")
         private Integer usageLimit;
 
         // عدد مرات الاستخدام الحالية
@@ -57,6 +61,7 @@ public class Coupon {
 
         // هل الكوبون لخدمة معينة؟
         @Enumerated(EnumType.STRING)
+        @NotBlank(message = "لايمكن ترك نوع الخدمة فارغه")
         private ServiceOption serviceOption;
 
         private LocalDateTime createdAt;
