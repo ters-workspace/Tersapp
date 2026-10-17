@@ -12,12 +12,10 @@ public interface UserRepository extends JpaRepository<User,Integer> {
 
     void deleteByPhoneNumber(String phoneNumber);
 
+    List<User> findByRoleAndStatus(UserRole role, UserStatus status);
+
     Optional<User> findByPhoneNumber(String phone);
 
-    Optional<User> findByEmailOrPhoneNumber(
-            String email,
-            String phoneNumber
-    );
 
     Optional<User> findByEmail(String email);
 

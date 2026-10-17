@@ -13,6 +13,10 @@ import org.example.tears.Enums.NotificationEntityType;
 import org.example.tears.Enums.NotificationSection;
 import org.example.tears.Enums.NotificationType;
 import org.example.tears.Repository.UserDeviceRepository;
+import org.example.tears.Enums.UserRole;
+import org.example.tears.Enums.UserStatus;
+import org.example.tears.Repository.UserRepository;
+import org.example.tears.Model.CarServiceRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +32,7 @@ public class NotificationService {
     private final NotificationRepository repo;
     private final SocketService socketService;
     private final FcmService fcmService;
+    private final UserRepository userRepository;
     private final UserDeviceRepository userDeviceRepository;
 
 
@@ -91,6 +96,38 @@ public class NotificationService {
             fcmService.send(user, saved);
         }
     }
+
+
+    public void notifyActiveAdminsAboutNewRequest(
+            CarServiceRequest request
+    ) {
+        List<User> admins = userRepository.findByRoleAndStatus(
+                UserRole.ADMIN,
+                UserStatus.ACTIVE
+        );
+
+        String orderNumber = request.getOrderNumber();
+        String amount = String.valueOf(request.getEstimatedPrice());
+
+        for (User admin : admins) {
+            send(
+                    admin,
+                    NotificationType.REQUEST_CREATED,
+                    NotificationCategory.REQUEST,
+                    "طلب جديد بانتظار المراجعة",
+                    "تم إنشاء طلب جديد رقم "
+                            + orderNumber
+                            + " بقيمة "
+                            + amount
+                            + " ر.س، يرجى مراجعة تفاصيل الطلب.",
+                    NotificationActionType.OPEN_ENTITY,
+                    NotificationEntityType.REQUEST,
+                    request.getId().toString(),
+                    NotificationSection.REQUESTS
+            );
+        }
+    }
+
 
     private NotificationDto toDto(Notification notification) {
 
