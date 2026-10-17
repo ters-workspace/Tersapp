@@ -837,6 +837,7 @@ import java.util.stream.Collectors;
     }
 
 
+
     @Transactional
     public void chooseDelivery(
             Integer requestId,
@@ -844,31 +845,28 @@ import java.util.stream.Collectors;
             Customer customer
     ) {
 
-        CarServiceRequest request =
-                requestRepo.findById(requestId)
-                        .orElseThrow(() ->
-                                new ApiException("الطلب غير موجود"));
+        CarServiceRequest request = requestRepo.findById(requestId)
+                .orElseThrow(() -> new ApiException("الطلب غير موجود"));
 
-        if (!request.getCustomer().getId().equals(customer.getId())) {
+        if (request.getCustomer() == null
+                || !request.getCustomer().getId().equals(customer.getId())) {
             throw new ApiException("غير مصرح لك");
         }
 
-        WarrantyRequest warranty =
-                warrantyRepo.findByRequestId(requestId)
-                        .orElse(null);
+        WarrantyRequest warranty = warrantyRepo.findByRequestId(requestId)
+                .orElse(null);
 
         boolean isWarrantyReceiving =
-                warranty != null &&
-                        warranty.getStatus() == WarrantyStatus.APPROVED;
+                warranty != null
+                        && warranty.getStatus() == WarrantyStatus.APPROVED;
 
         boolean isWarrantyDelivery =
-                warranty != null &&
-                        warranty.getStatus() == WarrantyStatus.DELIVERY_IN_PROGRESS;
+                warranty != null
+                        && warranty.getStatus() == WarrantyStatus.DELIVERY_IN_PROGRESS;
 
-        // ===========================
-        // Warranty Receiving
-        // ===========================
-
+        // ==========================================
+        // WARRANTY RECEIVING
+        // ==========================================
         if (isWarrantyReceiving) {
 
             appointmentService.validateAppointment(
@@ -882,10 +880,8 @@ import java.util.stream.Collectors;
                 );
             }
 
-            Location location =
-                    locationRepository.findById(dto.getLocationId())
-                            .orElseThrow(() ->
-                                    new ApiException("الموقع غير موجود"));
+            Location location = locationRepository.findById(dto.getLocationId())
+                    .orElseThrow(() -> new ApiException("الموقع غير موجود"));
 
             warranty.setReceivingLocation(location);
             warranty.setReceivingDate(dto.getDeliveryDate());
@@ -895,14 +891,12 @@ import java.util.stream.Collectors;
             warrantyRepo.save(warranty);
 
             socketService.send(
-                    "/topic/warranty/" +
-                            customer.getUser().getId(),
+                    "/topic/warranty/" + customer.getUser().getId(),
                     warrantyService.toWarrantyResponseDto(warranty)
             );
 
             socketService.send(
-                    "/topic/warranty-details/" +
-                            warranty.getId(),
+                    "/topic/warranty-details/" + warranty.getId(),
                     warrantyService.toWarrantyDetailsDto(warranty)
             );
 
@@ -912,47 +906,33 @@ import java.util.stream.Collectors;
             );
 
             socketService.send(
-                    "/topic/current-orders/" +
-                            customer.getUser().getId(),
+                    "/topic/current-orders/" + customer.getUser().getId(),
                     carServiceRequestService.toCurrentDto(request)
             );
 
-// ==========================================
-// EMPLOYEE - LIST
-// ==========================================
+            // Employee notifications for warranty receiving
+            Employee assignedTechnician = warranty.getAssignedTechnician();
 
-            Employee assignedTechnician =
-                    warranty.getAssignedTechnician();
-
-            if (assignedTechnician != null &&
-                    assignedTechnician.getUser() != null) {
+            if (assignedTechnician != null
+                    && assignedTechnician.getUser() != null) {
 
                 socketService.send(
-                        "/topic/employee-requests/" +
-                                assignedTechnician.getUser().getId(),
-
+                        "/topic/employee-requests/"
+                                + assignedTechnician.getUser().getId(),
                         requestQueryService.getMyRequests(
                                 assignedTechnician,
                                 null,
                                 "ALL"
                         )
                 );
-                socketService.send(
-                        "/topic/employee-request-details/" +
-                                request.getId(),
 
+                socketService.send(
+                        "/topic/employee-request-details/" + request.getId(),
                         requestMapper.toEmployeeDetailsDto(request)
                 );
 
-
-                // ======================================
-                // EMPLOYEE - WARRANTY DETAILS
-                // ======================================
-
                 socketService.send(
-                        "/topic/employee-warranty-details/" +
-                                warranty.getId(),
-
+                        "/topic/employee-warranty-details/" + warranty.getId(),
                         requestMapper.toEmployeeWarrantyDetailsDto(
                                 warranty,
                                 requestQueryService.getWarrantyTimeline(
@@ -962,14 +942,15 @@ import java.util.stream.Collectors;
                 );
             }
 
+            sendDeliveryAppointmentNotification(request, customer, true);
 
+            return;
         }
 
-        // ===========================
-        // Warranty Delivery
-        // ===========================
-
-        else if (isWarrantyDelivery) {
+        // ==========================================
+        // WARRANTY DELIVERY
+        // ==========================================
+        if (isWarrantyDelivery) {
 
             appointmentService.validateAppointment(
                     dto.getDeliveryDate(),
@@ -982,10 +963,8 @@ import java.util.stream.Collectors;
                 );
             }
 
-            Location location =
-                    locationRepository.findById(dto.getLocationId())
-                            .orElseThrow(() ->
-                                    new ApiException("الموقع غير موجود"));
+            Location location = locationRepository.findById(dto.getLocationId())
+                    .orElseThrow(() -> new ApiException("الموقع غير موجود"));
 
             warranty.setDeliveryLocation(location);
             warranty.setDeliveryDate(dto.getDeliveryDate());
@@ -995,14 +974,12 @@ import java.util.stream.Collectors;
             warrantyRepo.save(warranty);
 
             socketService.send(
-                    "/topic/warranty/" +
-                            customer.getUser().getId(),
+                    "/topic/warranty/" + customer.getUser().getId(),
                     warrantyService.toWarrantyResponseDto(warranty)
             );
 
             socketService.send(
-                    "/topic/warranty-details/" +
-                            warranty.getId(),
+                    "/topic/warranty-details/" + warranty.getId(),
                     warrantyService.toWarrantyDetailsDto(warranty)
             );
 
@@ -1012,134 +989,19 @@ import java.util.stream.Collectors;
             );
 
             socketService.send(
-                    "/topic/current-orders/" +
-                            customer.getUser().getId(),
-                    carServiceRequestService.toCurrentDto(request)
-            );
-        }
-
-// ==========================================
-// EMPLOYEE - LIST
-// ==========================================
-
-        Employee assignedTechnician =
-                warranty.getAssignedTechnician();
-
-        if (assignedTechnician != null &&
-                assignedTechnician.getUser() != null) {
-
-            socketService.send(
-                    "/topic/employee-requests/" +
-                            assignedTechnician.getUser().getId(),
-
-                    requestQueryService.getMyRequests(
-                            assignedTechnician,
-                            null,
-                            "ALL"
-                    )
-            );
-
-            socketService.send(
-                    "/topic/employee-request-details/" +
-                            request.getId(),
-
-                    requestMapper.toEmployeeDetailsDto(request)
-            );
-
-
-            // ======================================
-            // EMPLOYEE - WARRANTY DETAILS
-            // ======================================
-
-            socketService.send(
-                    "/topic/employee-warranty-details/" +
-                            warranty.getId(),
-
-                    requestMapper.toEmployeeWarrantyDetailsDto(
-                            warranty,
-                            requestQueryService.getWarrantyTimeline(
-                                    warranty.getId()
-                            )
-                    )
-            );
-        }
-
-        // ===========================
-        // Normal Request Delivery
-        // ===========================
-        else if (warranty != null) {
-
-            throw new ApiException(
-                    "لا يمكن اختيار موعد حالياً لطلب الضمان"
-            );
-        }
-
-        else {
-
-            if (request.getStaffStatus() !=
-                    StaffRequestStatus.DELIVERY_IN_PROGRESS) {
-
-                throw new ApiException(
-                        "لا يمكن اختيار موعد التسليم حالياً"
-                );
-            }
-
-            appointmentService.validateAppointment(
-                    dto.getDeliveryDate(),
-                    dto.getDeliveryTime()
-            );
-
-            if (Boolean.TRUE.equals(
-                    request.getCustomerSelectedDelivery()
-            )) {
-                throw new ApiException(
-                        "تم اختيار موعد التسليم مسبقاً"
-                );
-            }
-
-            Location location =
-                    locationRepository.findById(dto.getLocationId())
-                            .orElseThrow(() ->
-                                    new ApiException("الموقع غير موجود"));
-
-            request.setDeliveryLocation(location);
-            request.setDeliveryDate(dto.getDeliveryDate());
-            request.setDeliveryTime(dto.getDeliveryTime());
-            request.setCustomerSelectedDelivery(true);
-            request.setLastUpdated(LocalDateTime.now());
-
-            requestRepo.save(request);
-
-            socketService.send(
-                    "/topic/current-orders/" +
-                            customer.getUser().getId(),
+                    "/topic/current-orders/" + customer.getUser().getId(),
                     carServiceRequestService.toCurrentDto(request)
             );
 
-            socketService.send(
-                    "/topic/availability",
-                    appointmentService.getAllAvailability()
-            );
+            // Employee notifications for warranty delivery
+            Employee assignedTechnician = warranty.getAssignedTechnician();
 
-            socketService.send(
-                    "/topic/request/" +
-                            request.getId(),
-                    carServiceRequestService.toDetailsDto(request)
-            );
-
-// ==========================================
-// EMPLOYEE - LIST
-// ==========================================
-
-            assignedTechnician = warranty.getAssignedTechnician();
-
-            if (assignedTechnician != null &&
-                    assignedTechnician.getUser() != null) {
+            if (assignedTechnician != null
+                    && assignedTechnician.getUser() != null) {
 
                 socketService.send(
-                        "/topic/employee-requests/" +
-                                assignedTechnician.getUser().getId(),
-
+                        "/topic/employee-requests/"
+                                + assignedTechnician.getUser().getId(),
                         requestQueryService.getMyRequests(
                                 assignedTechnician,
                                 null,
@@ -1148,48 +1010,138 @@ import java.util.stream.Collectors;
                 );
 
                 socketService.send(
-                        "/topic/employee-request-details/" +
-                                request.getId(),
-
+                        "/topic/employee-request-details/" + request.getId(),
                         requestMapper.toEmployeeDetailsDto(request)
                 );
 
-            }
-
-            // ===========================
-            // Notification
-            // ===========================
-
-            if (request.getCurrentEmployee() != null) {
-
-                String body =
-                        isWarrantyReceiving
-                                ? "قام العميل بحجز موعد استلام سيارة الضمان للطلب #"
-                                + request.getOrderNumber()
-                                : isWarrantyDelivery
-                                ? "قام العميل بحجز موعد تسليم سيارة الضمان للطلب #"
-                                + request.getOrderNumber()
-                                : "قام العميل بحجز موعد تسليم السيارة للطلب #"
-                                + request.getOrderNumber();
-
-                notificationService.send(
-                        request.getCurrentEmployee().getUser(),
-
-                        NotificationType.APPOINTMENT_CONFIRMED,
-                        NotificationCategory.APPOINTMENT,
-
-                        "تم حجز موعد",
-
-                        body,
-
-                        NotificationActionType.OPEN_ENTITY,
-                        NotificationEntityType.REQUEST,
-                        request.getId().toString(),
-                        NotificationSection.REQUESTS
+                socketService.send(
+                        "/topic/employee-warranty-details/" + warranty.getId(),
+                        requestMapper.toEmployeeWarrantyDetailsDto(
+                                warranty,
+                                requestQueryService.getWarrantyTimeline(
+                                        warranty.getId()
+                                )
+                        )
                 );
-
             }
+
+            sendDeliveryAppointmentNotification(request, customer, false);
+
+            return;
         }
+
+        // ==========================================
+        // OTHER WARRANTY STATUSES
+        // ==========================================
+        if (warranty != null) {
+            throw new ApiException(
+                    "لا يمكن اختيار موعد حالياً لطلب الضمان"
+            );
+        }
+
+        // ==========================================
+        // NORMAL REQUEST DELIVERY
+        // ==========================================
+        if (request.getStaffStatus() != StaffRequestStatus.DELIVERY_IN_PROGRESS) {
+            throw new ApiException(
+                    "لا يمكن اختيار موعد التسليم حالياً"
+            );
+        }
+
+        appointmentService.validateAppointment(
+                dto.getDeliveryDate(),
+                dto.getDeliveryTime()
+        );
+
+        if (Boolean.TRUE.equals(request.getCustomerSelectedDelivery())) {
+            throw new ApiException(
+                    "تم اختيار موعد التسليم مسبقاً"
+            );
+        }
+
+        Location location = locationRepository.findById(dto.getLocationId())
+                .orElseThrow(() -> new ApiException("الموقع غير موجود"));
+
+        request.setDeliveryLocation(location);
+        request.setDeliveryDate(dto.getDeliveryDate());
+        request.setDeliveryTime(dto.getDeliveryTime());
+        request.setCustomerSelectedDelivery(true);
+        request.setLastUpdated(LocalDateTime.now());
+
+        requestRepo.save(request);
+
+        // Customer updates
+        socketService.send(
+                "/topic/current-orders/" + customer.getUser().getId(),
+                carServiceRequestService.toCurrentDto(request)
+        );
+
+        socketService.send(
+                "/topic/availability",
+                appointmentService.getAllAvailability()
+        );
+
+        socketService.send(
+                "/topic/request/" + request.getId(),
+                carServiceRequestService.toDetailsDto(request)
+        );
+
+        // Employee updates for a normal request.
+        // IMPORTANT: Do not access WarrantyRequest in this branch.
+        Employee currentEmployee = request.getCurrentEmployee();
+
+        if (currentEmployee != null && currentEmployee.getUser() != null) {
+
+            socketService.send(
+                    "/topic/employee-requests/" + currentEmployee.getUser().getId(),
+                    requestQueryService.getMyRequests(
+                            currentEmployee,
+                            null,
+                            "ALL"
+                    )
+            );
+
+            socketService.send(
+                    "/topic/employee-request-details/" + request.getId(),
+                    requestMapper.toEmployeeDetailsDto(request)
+            );
+        }
+
+        sendDeliveryAppointmentNotification(request, customer, false);
+    }
+
+    /**
+     * Sends the appointment notification to the employee currently
+     * responsible for the request, if one exists.
+     */
+    private void sendDeliveryAppointmentNotification(
+            CarServiceRequest request,
+            Customer customer,
+            boolean warrantyReceiving
+    ) {
+
+        if (request.getCurrentEmployee() == null
+                || request.getCurrentEmployee().getUser() == null) {
+            return;
+        }
+
+        String body = warrantyReceiving
+                ? "قام العميل بحجز موعد استلام سيارة الضمان للطلب #"
+                + request.getOrderNumber()
+                : "قام العميل بحجز موعد تسليم السيارة للطلب #"
+                + request.getOrderNumber();
+
+        notificationService.send(
+                request.getCurrentEmployee().getUser(),
+                NotificationType.APPOINTMENT_CONFIRMED,
+                NotificationCategory.APPOINTMENT,
+                "تم حجز موعد",
+                body,
+                NotificationActionType.OPEN_ENTITY,
+                NotificationEntityType.REQUEST,
+                request.getId().toString(),
+                NotificationSection.REQUESTS
+        );
     }
 
     @Transactional
