@@ -17,6 +17,8 @@ import org.example.tears.Enums.UserRole;
 import org.example.tears.Enums.UserStatus;
 import org.example.tears.Repository.UserRepository;
 import org.example.tears.Model.CarServiceRequest;
+import org.example.tears.DTO.RequestNotificationSummaryDto;
+import org.example.tears.Repository.CarServiceRequestRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,8 +36,7 @@ public class NotificationService {
     private final FcmService fcmService;
     private final UserRepository userRepository;
     private final UserDeviceRepository userDeviceRepository;
-
-
+    private final CarServiceRequestRepository carServiceRequestRepository;
 
     public void send(
             User user,
@@ -278,5 +279,74 @@ public class NotificationService {
                         device.getLastSeen()
                 ))
                 .toList();
+    }
+    public RequestNotificationSummaryDto getRequestSummaryForNotification(
+            Integer notificationId,
+            User user
+    ) {
+        // Only admins can access the request summary.
+        if (user == null || user.getRole() != UserRole.ADMIN) {
+            throw new ApiException("Access denied");
+        }
+
+        // Make sure this notification belongs to the authenticated admin.
+        Notification notification = repo
+                .findByIdAndUserId(notificationId, user.getId())
+                .orElseThrow(() ->
+                        new ApiException("Notification not found")
+                );
+
+        // This endpoint supports request notifications only.
+        if (notification.getEntityType() != NotificationEntityType.REQUEST
+                || notification.getEntityId() == null) {
+            throw new ApiException(
+                    "This notification is not linked to a request"
+            );
+        }
+
+        Integer requestId;
+
+        try {
+            requestId = Integer.valueOf(notification.getEntityId());
+        } catch (NumberFormatException exception) {
+            throw new ApiException("Invalid request reference");
+        }
+
+        // Load the request linked to the notification.
+        CarServiceRequest request = carServiceRequestRepository
+                .findById(requestId)
+                .orElseThrow(() ->
+                        new ApiException("Request not found")
+                );
+
+        // Customer name.
+        String customerName = null;
+
+        if (request.getCustomer() != null
+                && request.getCustomer().getUser() != null) {
+            customerName = request.getCustomer()
+                    .getUser()
+                    .getFullName();
+        }
+
+        // Assigned technician name, not the current or pricing employee.
+        String assignedTechnicianName = null;
+
+        if (request.getAssignedTechnician() != null
+                && request.getAssignedTechnician().getUser() != null) {
+            assignedTechnicianName = request.getAssignedTechnician()
+                    .getUser()
+                    .getFullName();
+        }
+
+        return new RequestNotificationSummaryDto(
+                request.getOrderNumber(),
+                customerName,
+                request.getEstimatedPrice(),
+                "تطبيق العميل",
+                request.getAppointmentDate(),
+                request.getAppointmentTime(),
+                assignedTechnicianName
+        );
     }
 }

@@ -9,6 +9,7 @@ import org.example.tears.DTO.RegisterDeviceDto;
 import org.example.tears.DTO.UnregisterDeviceDto;
 import org.example.tears.Enums.UserRole;
 import org.example.tears.Model.User;
+import org.example.tears.DTO.RequestNotificationSummaryDto;
 import org.example.tears.Service.AuthService;
 import org.example.tears.Service.NotificationService;
 import org.springframework.http.ResponseEntity;
@@ -111,6 +112,16 @@ public class NotificationController {
                 true,
                 "تم جلب الأجهزة المسجلة",
                 notificationService.getAllDevicesForAdmin()
+        );
+    }
+    @GetMapping("/notification/{id}/request-summary")
+    public RequestNotificationSummaryDto getRequestSummary(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal User user
+    ) {
+        return notificationService.getRequestSummaryForNotification(
+                id,
+                user
         );
     }
 
