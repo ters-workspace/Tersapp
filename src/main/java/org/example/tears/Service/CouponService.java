@@ -12,6 +12,7 @@ import org.example.tears.Model.CarServiceRequest;
 import org.example.tears.Model.Coupon;
 import org.example.tears.Model.CouponUsage;
 import org.example.tears.Model.Customer;
+import org.example.tears.Repository.CarServiceRequestRepository;
 import org.example.tears.Repository.CouponRepository;
 import org.example.tears.Repository.CouponUsageRepository;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class CouponService {
 
     private final CouponRepository couponRepository;
     private final CouponUsageRepository couponUsageRepository;
+    private final CarServiceRequestRepository carServiceRequestRepository;
 
     public Coupon create(CreateCouponRequest dto) {
 
@@ -47,6 +49,12 @@ public class CouponService {
         coupon.setMaxDiscountAmount(dto.getMaxDiscountAmount());
         coupon.setExpiryDate(dto.getExpiryDate());
         coupon.setServiceOption(dto.getServiceOption());
+        coupon.setNewUsersOnly(
+                Boolean.TRUE.equals(dto.getNewUsersOnly())
+        );
+        coupon.setOneTimePerUser(
+                Boolean.TRUE.equals(dto.getOneTimePerUser())
+        );
         coupon.setCreatedAt(LocalDateTime.now());
 
         return couponRepository.save(coupon);
@@ -59,6 +67,22 @@ public class CouponService {
 
         if (dto.getDiscountPercentage() != null) {
             coupon.setDiscountPercentage(dto.getDiscountPercentage());
+        }
+
+        if (dto.getTitle() != null) {
+            coupon.setTitle(dto.getTitle());
+        }
+
+        if (dto.getDescription() != null) {
+            coupon.setDescription(dto.getDescription());
+        }
+
+        if (dto.getCode() != null) {
+            coupon.setCode(dto.getCode());
+        }
+
+        if (dto.getServiceOption() != null) {
+            coupon.setServiceOption(dto.getServiceOption());
         }
 
         if (dto.getFixedDiscount() != null) {
@@ -81,9 +105,10 @@ public class CouponService {
             coupon.setExpiryDate(dto.getExpiryDate());
         }
 
-        if (dto.getActive() != null) {
-            coupon.setActive(dto.getActive());
+        if (dto.getNewUsersOnly() != null) {
+            coupon.setNewUsersOnly(dto.getNewUsersOnly());
         }
+        coupon.setUpdatedAt(LocalDateTime.now());
 
         return couponRepository.save(coupon);
     }
@@ -107,6 +132,21 @@ public class CouponService {
 
         if (!coupon.isActive()) {
             throw new ApiException("الكوبون غير متاح");
+        }
+
+        if (Boolean.TRUE.equals(coupon.getNewUsersOnly())) {
+            if (customer == null || customer.getId() == null) {
+                throw new ApiException("تعذر التحقق من أهلية العميل");
+            }
+
+            boolean hasPreviousRequest =
+                    carServiceRequestRepository.existsByCustomer_Id(customer.getId());
+
+            if (hasPreviousRequest) {
+                throw new ApiException(
+                        "هذا الكوبون مخصص للعملاء الذين لم ينشئوا أي طلب خدمة سابقًا"
+                );
+            }
         }
 
         // =========================
@@ -197,12 +237,22 @@ public class CouponService {
         return couponRepository.findAll();
     }
 
-    public Coupon disable(Integer id) {
+    public Coupon disableCoupon(Integer id) {
 
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(() -> new ApiException("غير موجود"));
 
         coupon.setActive(false);
+
+        return couponRepository.save(coupon);
+    }
+
+    public Coupon enableCoupon(Integer id) {
+
+        Coupon coupon = couponRepository.findById(id)
+                .orElseThrow(() -> new ApiException("غير موجود"));
+
+        coupon.setActive(true);
 
         return couponRepository.save(coupon);
     }
@@ -253,6 +303,16 @@ public class CouponService {
                                     coupon.getId(),
                                     customer.getId()
                             );
+                })
+
+                .filter(coupon -> {
+                    if (!Boolean.TRUE.equals(coupon.getNewUsersOnly())) {
+                        return true;
+                    }
+
+                    return !carServiceRequestRepository.existsByCustomer_Id(
+                            customer.getId()
+                    );
                 })
 
                 .map(coupon -> {
@@ -471,5 +531,26 @@ public class CouponService {
                 .map(this::toCouponListDto)
                 .toList();
     }
+
+
+    @Transactional
+    public void deleteCoupon(Integer id) {
+
+        Coupon coupon = couponRepository.findById(id)
+                .orElseThrow(() ->
+                        new ApiException("الكوبون غير موجود"));
+
+        long usageCount =
+                couponUsageRepository.countByCouponId(id);
+
+        if (usageCount > 0) {
+            throw new ApiException(
+                    "لا يمكن حذف الكوبون لأنه مستخدم سابقًا، يمكنك تعطيله بدلًا من ذلك"
+            );
+        }
+
+        couponRepository.delete(coupon);
+    }
+
 
 }

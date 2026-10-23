@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import org.example.tears.Enums.ServiceOption;
 
 import java.time.LocalDate;
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -28,6 +30,12 @@ public class CreateCouponRequest {
     private Integer maxDiscountAmount;
 
     private LocalDate expiryDate;
+
+    private Boolean newUsersOnly;
+
+    private Boolean oneTimePerUser = false;
+
+    private List<Integer> eligibleCustomerIds;
 
     private ServiceOption serviceOption;
 }

@@ -185,7 +185,6 @@ public class WarrantyService {
                     )
             );
         }
-
 // ============================
 // Notifications
 // ============================
@@ -238,6 +237,8 @@ public class WarrantyService {
                 warranty.getId().toString(),
                 NotificationSection.WARRANTY
         );
+        notificationService.notifyActiveAdminsAboutNewWarranty(warranty);
+
         return toWarrantyRequestSummaryDto(warranty);
     }
 

@@ -29,6 +29,7 @@ public interface CarServiceRequestRepository extends JpaRepository<CarServiceReq
             StaffRequestStatus status
     );
 
+    boolean existsByCustomer_Id(Integer customerId);
 
     long countByAssignedPricingEmployee_IdAndPricingStatus(
             Integer employeeId,

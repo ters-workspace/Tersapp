@@ -3,6 +3,7 @@ package org.example.tears.Controller;
 import lombok.RequiredArgsConstructor;
 import org.example.tears.Api.ApiException;
 import org.example.tears.Api.ApiResponse;
+import org.example.tears.DTO.AdminCouponCustomerDto;
 import org.example.tears.DTO.CustomerCouponDto;
 import org.example.tears.InpDTO.CreateCouponRequest;
 import org.example.tears.InpDTO.UpdateCouponRequest;
@@ -10,6 +11,7 @@ import org.example.tears.InpDTO.ValidateCouponDto;
 import org.example.tears.Model.Coupon;
 import org.example.tears.Model.User;
 import org.example.tears.OutDTO.PricingResponse;
+import org.example.tears.Repository.CustomerRepository;
 import org.example.tears.Service.CouponService;
 import org.example.tears.Service.PricingCalculationService;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,7 @@ public class CouponController {
 
     private final CouponService couponService;
     private final PricingCalculationService pricingCalculationService;
+    private final CustomerRepository customerRepository;
 
     @PostMapping("/new")
     public Coupon create(@RequestBody CreateCouponRequest dto) {
@@ -99,8 +102,13 @@ public class CouponController {
     }
 
     @PutMapping("/disable/{id}")
-    public Coupon disable(@PathVariable Integer id) {
-        return couponService.disable(id);
+    public Coupon disableCoupon(@PathVariable Integer id) {
+        return couponService.disableCoupon(id);
+    }
+
+    @PutMapping("/enable/{id}")
+    public Coupon enableCoupon(@PathVariable Integer id) {
+        return couponService.enableCoupon(id);
     }
 
     @GetMapping("/customer/coupons")
@@ -116,4 +124,20 @@ public class CouponController {
                 user.getCustomer()
         );
     }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> delete(@PathVariable Integer id) {
+        couponService.deleteCoupon(id);
+        return ResponseEntity.ok("تم حذف الكوبون بنجاح");
+    }
+
+    @GetMapping("/admin/customers")
+    public ResponseEntity<List<AdminCouponCustomerDto>>
+    getCustomersForCouponSelection() {
+
+        return ResponseEntity.ok(
+                customerRepository.findAllCustomersForCouponSelection()
+        );
+    }
+
 }

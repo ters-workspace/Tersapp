@@ -103,6 +103,10 @@ public class TicketService {
 
         // حفظ رقم التذكرة
         ticket = ticketRepository.save(ticket);
+
+        // إشعار الأدمن بالتذكرة الجديدة
+        notificationService.notifyActiveAdminsAboutNewTicket(ticket);
+
         socketService.send(
                 "/topic/employee-tickets/" +
                         ticket.getCreatedByEmployee().getUser().getId(),

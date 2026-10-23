@@ -12,6 +12,8 @@ import org.example.tears.Enums.ServiceOption;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Entity
@@ -74,5 +76,18 @@ public class Coupon {
         @Enumerated(EnumType.STRING)
         private ServiceOption serviceOption;
 
+        @Column(nullable = false)
+        private Boolean newUsersOnly = false;
+
+        @ManyToMany
+        @JoinTable(
+                name = "coupon_eligible_customers",
+                joinColumns = @JoinColumn(name = "coupon_id"),
+                inverseJoinColumns = @JoinColumn(name = "customer_id")
+        )
+        private Set<Customer> eligibleCustomers = new HashSet<>();
+
         private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+
 }

@@ -3,9 +3,7 @@ package org.example.tears.Service;
 import lombok.RequiredArgsConstructor;
 import org.example.tears.Api.ApiException;
 import org.example.tears.DTO.*;
-import org.example.tears.Model.Notification;
-import org.example.tears.Model.User;
-import org.example.tears.Model.UserDevice;
+import org.example.tears.Model.*;
 import org.example.tears.Repository.NotificationRepository;
 import org.example.tears.Enums.NotificationActionType;
 import org.example.tears.Enums.NotificationCategory;
@@ -16,7 +14,6 @@ import org.example.tears.Repository.UserDeviceRepository;
 import org.example.tears.Enums.UserRole;
 import org.example.tears.Enums.UserStatus;
 import org.example.tears.Repository.UserRepository;
-import org.example.tears.Model.CarServiceRequest;
 import org.example.tears.DTO.RequestNotificationSummaryDto;
 import org.example.tears.Repository.CarServiceRequestRepository;
 import org.springframework.stereotype.Service;
@@ -115,7 +112,7 @@ public class NotificationService {
                     admin,
                     NotificationType.REQUEST_CREATED,
                     NotificationCategory.REQUEST,
-                    "طلب جديد بانتظار المراجعة",
+                    "طلب جديد بانتظار الإسناد",
                     "تم إنشاء طلب جديد رقم "
                             + orderNumber
                             + " بقيمة "
@@ -128,7 +125,114 @@ public class NotificationService {
             );
         }
     }
+    public void notifyActiveAdminsAboutNewTicket(Ticket ticket) {
 
+        if (ticket == null || ticket.getId() == null) {
+            return;
+        }
+
+        List<User> admins = userRepository.findByRoleAndStatus(
+                UserRole.ADMIN,
+                UserStatus.ACTIVE
+        );
+
+        String ticketNumber = ticket.getTicketNumber() != null
+                ? ticket.getTicketNumber()
+                : "TK-" + ticket.getId();
+
+        String orderNumber = ticket.getRequest() != null
+                && ticket.getRequest().getOrderNumber() != null
+                ? ticket.getRequest().getOrderNumber()
+                : "غير متوفر";
+
+        String customerName = ticket.getCustomer() != null
+                && ticket.getCustomer().getUser() != null
+                && ticket.getCustomer().getUser().getFullName() != null
+                ? ticket.getCustomer().getUser().getFullName()
+                : "غير معروف";
+
+        String problemType = ticket.getProblemType() != null
+                ? ticket.getProblemType().name()
+                : "غير محدد";
+
+        String priority = ticket.getPriority() != null
+                ? ticket.getPriority().name()
+                : "غير محددة";
+
+        String body = "تم إنشاء تذكرة جديدة رقم "
+                + ticketNumber
+                + " للطلب رقم "
+                + orderNumber
+                + ". العميل: "
+                + customerName
+                + ". نوع المشكلة: "
+                + problemType
+                + ". الأولوية: "
+                + priority
+                + ".";
+
+        for (User admin : admins) {
+            send(
+                    admin,
+                    NotificationType.SUPPORT_TICKET_CREATED,
+                    NotificationCategory.SUPPORT,
+                    "تذكرة جديدة",
+                    body,
+                    NotificationActionType.OPEN_ENTITY,
+                    NotificationEntityType.SUPPORT_TICKET,
+                    ticket.getId().toString(),
+                    NotificationSection.SUPPORT
+            );
+        }
+    }
+
+    public void notifyActiveAdminsAboutNewWarranty(
+            WarrantyRequest warranty
+    ) {
+        if (warranty == null || warranty.getId() == null) {
+            return;
+        }
+
+        List<User> admins = userRepository.findByRoleAndStatus(
+                UserRole.ADMIN,
+                UserStatus.ACTIVE
+        );
+
+        String warrantyId = warranty.getId().toString();
+
+        String orderNumber = warranty.getRequest() != null
+                && warranty.getRequest().getOrderNumber() != null
+                ? warranty.getRequest().getOrderNumber()
+                : "غير متوفر";
+
+        String customerName = warranty.getCustomer() != null
+                && warranty.getCustomer().getUser() != null
+                && warranty.getCustomer().getUser().getFullName() != null
+                ? warranty.getCustomer().getUser().getFullName()
+                : "غير معروف";
+
+        String body = "تم إنشاء طلب ضمان جديد رقم #"
+                + warrantyId
+                + " للطلب الأساسي رقم "
+                + orderNumber
+                + ". العميل: "
+                + customerName
+                + ".";
+
+        for (User admin : admins) {
+            send(
+                    admin,
+                    NotificationType.WARRANTY_CREATED,
+                    NotificationCategory.WARRANTY,
+                    "طلب ضمان جديد",
+                    body,
+                    NotificationActionType.OPEN_ENTITY,
+                    NotificationEntityType.WARRANTY,
+                    warrantyId,
+                    NotificationSection.WARRANTY
+            );
+        }
+    }
 
     private NotificationDto toDto(Notification notification) {
 
