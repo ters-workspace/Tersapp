@@ -173,8 +173,6 @@ public class AdminService {
 
         return result;
     }
-
-
     public ApiResponse deactivateEmployee(Integer id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ApiException("Employee not found"));

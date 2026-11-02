@@ -16,9 +16,11 @@ public class RequestSummaryDto {
         private String stage;
 
         private String customerName;
+        private String customerPhone;
 
-        private String AssignedTechnician;
-
+        private String assignedTechnician;
+        private String serviceName;
+        private String city;
         private LocalDateTime createdAt; // 👈 مهم
 
     }

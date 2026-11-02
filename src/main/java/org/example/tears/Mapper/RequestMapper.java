@@ -36,6 +36,12 @@ public class RequestMapper {
         dto.setId(req.getId());
         dto.setOrderNumber(req.getOrderNumber());
 
+        dto.setServiceName(
+                req.getServiceOption() != null
+                        ? req.getServiceOption().name()
+                        : null
+        );
+
         dto.setStatus(
                 req.getStaffStatus() != null
                         ? req.getStaffStatus().name()
@@ -50,23 +56,44 @@ public class RequestMapper {
 
         dto.setCreatedAt(req.getCreatedAt());
 
-        if (req.getCustomer() != null) {
+        if (req.getCustomer() != null &&
+                req.getCustomer().getUser() != null) {
+
             dto.setCustomerName(
-                    req.getCustomer()
-                            .getUser()
-                            .getFullName()
+                    req.getCustomer().getUser().getFullName()
+            );
+
+            dto.setCustomerPhone(
+                    req.getCustomer().getUser().getPhoneNumber()
             );
         }
 
-        if (req.getAssignedTechnician() != null) {
+        if (req.getLocation() != null) {
+            dto.setCity(
+                    extractCity(req.getLocation().getAddress())
+            );
+        }
+
+        if (req.getAssignedTechnician() != null &&
+                req.getAssignedTechnician().getUser() != null) {
+
             dto.setAssignedTechnician(
-                    req.getAssignedTechnician()
-                            .getUser()
-                            .getFullName()
+                    req.getAssignedTechnician().getUser().getFullName()
             );
         }
 
         return dto;
+    }
+
+    private String extractCity(String address) {
+
+        if (address == null || address.isBlank()) {
+            return address;
+        }
+
+        String[] parts = address.split("،");
+
+        return parts[parts.length - 1].trim();
     }
 
     public EmployeeRequestResponseDto toEmployeeCardDto(
