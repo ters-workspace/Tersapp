@@ -18,4 +18,5 @@ public class EmployeeListDto {
     private String status;
     private LocalDateTime joinedAt;
     private Long completedRequests;
+    private Long assignedRequests;
 }

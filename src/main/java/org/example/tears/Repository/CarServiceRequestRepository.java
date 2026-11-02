@@ -241,4 +241,15 @@ WHERE
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
+
+    @Query("""
+    SELECT COUNT(r)
+    FROM CarServiceRequest r
+    WHERE r.currentEmployee.id = :employeeId
+    AND (r.staffStatus <> :excludedStatus OR r.staffStatus IS NULL)
+""")
+    long countAssignedRequestsByEmployee(
+            @Param("employeeId") Integer employeeId,
+            @Param("excludedStatus") StaffRequestStatus excludedStatus
+    );
 }

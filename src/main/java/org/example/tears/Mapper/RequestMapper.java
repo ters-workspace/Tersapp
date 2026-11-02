@@ -528,13 +528,15 @@ public class RequestMapper {
 
      public EmployeeListDto toEmployeeAdminDto(
                 Employee employee,
-                Long completedRequests
-) {
+                Long completedRequests,
+                Long assignedRequests
+     ) {
 
             EmployeeListDto dto =
                     new EmployeeListDto();
 
             dto.setId(employee.getId());
+
 
             dto.setFullName(
                     employee.getUser().getFullName()
@@ -573,6 +575,7 @@ public class RequestMapper {
             dto.setCompletedRequests(
                     completedRequests
             );
+         dto.setAssignedRequests(assignedRequests);
 
             return dto;
         }

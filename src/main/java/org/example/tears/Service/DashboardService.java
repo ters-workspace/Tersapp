@@ -260,9 +260,7 @@ public class DashboardService {
     public EmployeeDashboardDto getEmployees(String search) {
 
         long totalEmployees =
-                employeeRepository.countByUser_Status(
-                        UserStatus.ACTIVE
-                );
+                employeeRepository.countByUser_Status(UserStatus.ACTIVE);
 
         long technicians =
                 employeeRepository.countByUser_StatusAndJobTitle(
@@ -287,13 +285,10 @@ public class DashboardService {
         if (search == null || search.trim().isEmpty()) {
             employees = employeeRepository.findAll();
         } else {
-            employees = employeeRepository.searchEmployees(
-                    search.trim()
-            );
+            employees = employeeRepository.searchEmployees(search.trim());
         }
 
-        List<EmployeeListDto> employeeList =
-                new ArrayList<>();
+        List<EmployeeListDto> employeeList = new ArrayList<>();
 
         for (Employee employee : employees) {
 
@@ -303,10 +298,17 @@ public class DashboardService {
                             StaffRequestStatus.DELIVERED
                     );
 
+            long assignedRequests =
+                    requestRepository.countAssignedRequestsByEmployee(
+                            employee.getId(),
+                            StaffRequestStatus.DELIVERED
+                    );
+
             employeeList.add(
                     requestMapper.toEmployeeAdminDto(
                             employee,
-                            completedRequests
+                            completedRequests,
+                            assignedRequests
                     )
             );
         }
@@ -319,7 +321,6 @@ public class DashboardService {
                 employeeList
         );
     }
-
     public DashboardStatsDto getStats(
             DashboardSection section
     ) {

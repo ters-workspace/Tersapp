@@ -151,16 +151,22 @@ public class AdminService {
         for (Employee employee : employees) {
 
             long completedRequests =
-                    requestRepo
-                            .countCompletedRequestsByEmployee(
-                                    employee.getId(),
-                                    StaffRequestStatus.DELIVERED
-                            );
+                    requestRepo.countCompletedRequestsByEmployee(
+                            employee.getId(),
+                            StaffRequestStatus.DELIVERED
+                    );
+
+            long assignedRequests =
+                    requestRepo.countAssignedRequestsByEmployee(
+                            employee.getId(),
+                            StaffRequestStatus.DELIVERED
+                    );
 
             result.add(
                     requestMapper.toEmployeeAdminDto(
                             employee,
-                            completedRequests
+                            completedRequests,
+                            assignedRequests
                     )
             );
         }
