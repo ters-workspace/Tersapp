@@ -54,7 +54,7 @@ public class RequestMapper {
                         : null
         );
 
-        dto.setCreatedAt(req.getCreatedAt());
+        dto.setCreatedAt(req.getCreatedAt());//
 
         if (req.getCustomer() != null &&
                 req.getCustomer().getUser() != null) {
