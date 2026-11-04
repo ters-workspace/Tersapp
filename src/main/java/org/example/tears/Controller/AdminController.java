@@ -186,11 +186,27 @@ public class AdminController {
 
     @GetMapping("/statistics")
     public ResponseEntity<StatisticsDto> getStatistics(
-            @RequestParam(required = false) Integer hijriMonth,
-            @RequestParam(required = false) Integer hijriYear
+
+            @RequestParam(defaultValue = "hijri")
+            String calendar,
+
+            @RequestParam(defaultValue = "months")
+            String view,
+
+            @RequestParam(required = false)
+            Integer year,
+
+            @RequestParam(required = false)
+            Integer month
+
     ) {
         return ResponseEntity.ok(
-                dashboardService.getStatistics(hijriMonth, hijriYear)
+                dashboardService.getStatistics(
+                        calendar,
+                        view,
+                        year,
+                        month
+                )
         );
     }
 }

@@ -12,16 +12,11 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.Arrays;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
 import java.time.chrono.HijrahDate;
 import java.time.temporal.ChronoField;
-
-import java.util.HashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -1316,53 +1311,131 @@ public class DashboardService {
         return contacts;
     }
 
-    public StatisticsDto getStatistics(Integer hijriMonth, Integer hijriYear) {
+    public StatisticsDto getStatistics(
+            String calendar,
+            String view,
+            Integer year,
+            Integer month
+    ) {
+
+        // Validate parameters
+        calendar = calendar.toLowerCase(Locale.ROOT);
+        view = view.toLowerCase(Locale.ROOT);
+
+        if (!calendar.equals("hijri") && !calendar.equals("gregorian")) {
+            throw new IllegalArgumentException(
+                    "Calendar must be hijri or gregorian"
+            );
+        }
+
+        if (!view.equals("months") && !view.equals("years")) {
+            throw new IllegalArgumentException(
+                    "View must be months or years"
+            );
+        }
+
+        // Get current date according to selected calendar
+        LocalDate today = LocalDate.now();
 
         HijrahDate todayHijri = HijrahDate.now();
 
-        int currentHijriYear = todayHijri.get(ChronoField.YEAR_OF_ERA);
-        int currentHijriMonth = todayHijri.get(ChronoField.MONTH_OF_YEAR);
-
-        if (hijriYear == null) {
-            hijriYear = currentHijriYear;
+        if (year == null) {
+            year = calendar.equals("hijri")
+                    ? todayHijri.get(ChronoField.YEAR_OF_ERA)
+                    : today.getYear();
         }
 
-        if (hijriMonth == null) {
-            hijriMonth = currentHijriMonth;
+        // Month is required only for monthly view
+        if (view.equals("months")) {
+
+            if (month == null) {
+                month = calendar.equals("hijri")
+                        ? todayHijri.get(ChronoField.MONTH_OF_YEAR)
+                        : today.getMonthValue();
+            }
+
+            if (month < 1 || month > 12) {
+                throw new IllegalArgumentException(
+                        "Month must be between 1 and 12"
+                );
+            }
+
+        } else {
+            month = null;
         }
 
-        // Current selected month
-        LocalDateTime currentMonthStart = getHijriMonthStart(hijriYear, hijriMonth);
-        LocalDateTime currentMonthEnd = getHijriMonthEnd(hijriYear, hijriMonth);
+        // Selected period
+        LocalDateTime currentStart =
+                getPeriodStart(calendar, view, year, month);
 
-        // Previous month
-        HijrahDate previousHijriMonth = HijrahDate.of(hijriYear, hijriMonth, 1)
-                .minus(1, java.time.temporal.ChronoUnit.MONTHS);
+        LocalDateTime currentEnd =
+                getPeriodEnd(calendar, view, year, month);
 
-        int previousYear = previousHijriMonth.get(ChronoField.YEAR_OF_ERA);
-        int previousMonth = previousHijriMonth.get(ChronoField.MONTH_OF_YEAR);
+        // Previous period
+        int previousYear = year;
+        Integer previousMonth = month;
 
-        LocalDateTime previousMonthStart =
-                getHijriMonthStart(previousYear, previousMonth);
+        if (view.equals("months")) {
 
-        LocalDateTime previousMonthEnd =
-                getHijriMonthEnd(previousYear, previousMonth);
+            if (calendar.equals("hijri")) {
+
+                HijrahDate previousHijriMonth =
+                        HijrahDate.of(year, month, 1)
+                                .minus(1, ChronoUnit.MONTHS);
+
+                previousYear =
+                        previousHijriMonth.get(ChronoField.YEAR_OF_ERA);
+
+                previousMonth =
+                        previousHijriMonth.get(ChronoField.MONTH_OF_YEAR);
+
+            } else {
+
+                YearMonth previousGregorianMonth =
+                        YearMonth.of(year, month).minusMonths(1);
+
+                previousYear = previousGregorianMonth.getYear();
+                previousMonth = previousGregorianMonth.getMonthValue();
+            }
+
+        } else {
+            previousYear = year - 1;
+        }
+
+        LocalDateTime previousStart =
+                getPeriodStart(
+                        calendar,
+                        view,
+                        previousYear,
+                        previousMonth
+                );
+
+        LocalDateTime previousEnd =
+                getPeriodEnd(
+                        calendar,
+                        view,
+                        previousYear,
+                        previousMonth
+                );
 
         // Orders
         long currentOrders =
                 requestRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
-                        currentMonthStart,
-                        currentMonthEnd
+                        currentStart,
+                        currentEnd
                 );
 
         long previousOrders =
                 requestRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
-                        previousMonthStart,
-                        previousMonthEnd
+                        previousStart,
+                        previousEnd
                 );
 
         BigDecimal ordersGrowthPercentage =
-                calculateGrowthPercentage(currentOrders, previousOrders);
+                calculateGrowthPercentage(
+                        currentOrders,
+                        previousOrders
+                );
 
         // Customers
         long activeCustomers =
@@ -1371,53 +1444,131 @@ public class DashboardService {
                         UserStatus.ACTIVE
                 );
 
-        long newCustomersThisMonth =
+        long newCustomers =
                 userRepository.countByRoleAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
                         UserRole.CUSTOMER,
-                        currentMonthStart,
-                        currentMonthEnd
+                        currentStart,
+                        currentEnd
                 );
 
         // Revenue
-        BigDecimal monthlyRevenue =
+        BigDecimal revenue =
                 requestRepository.sumFinalPriceBetween(
-                        currentMonthStart,
-                        currentMonthEnd
+                        currentStart,
+                        currentEnd
                 );
 
-        BigDecimal previousMonthRevenue =
+        BigDecimal previousRevenue =
                 requestRepository.sumFinalPriceBetween(
-                        previousMonthStart,
-                        previousMonthEnd
+                        previousStart,
+                        previousEnd
                 );
 
         BigDecimal revenueGrowthPercentage =
                 calculateGrowthPercentage(
-                        monthlyRevenue,
-                        previousMonthRevenue
+                        revenue,
+                        previousRevenue
                 );
 
-        // Monthly chart
+        // Monthly chart: always 12 months
         List<MonthlyStatisticsDto> monthlyStatistics =
-                getMonthlyStatistics(hijriYear);
+                getMonthlyStatistics(calendar, year);
 
         // Hourly chart
         List<HourlyOrdersDto> hourlyOrders =
-                getHourlyOrders(currentMonthStart, currentMonthEnd);
+                getHourlyOrders(currentStart, currentEnd);
+
+        // Period information
+        PeriodDto period = new PeriodDto(
+                calendar,
+                view,
+                year,
+                month,
+                currentStart.toLocalDate().toString(),
+                currentEnd.minusDays(1).toLocalDate().toString()
+        );
 
         return new StatisticsDto(
                 currentOrders,
                 ordersGrowthPercentage,
-                activeCustomers,
-                newCustomersThisMonth,
-                monthlyRevenue,
+                revenue,
                 revenueGrowthPercentage,
+                newCustomers,
+                activeCustomers,
                 monthlyStatistics,
-                hourlyOrders
+                hourlyOrders,
+                period
         );
     }
+    private LocalDateTime getPeriodStart(
+            String calendar,
+            String view,
+            int year,
+            Integer month
+    ) {
 
-    private LocalDateTime getHijriMonthStart(int hijriYear, int hijriMonth) {
+        if (calendar.equals("hijri")) {
+
+            if (view.equals("months")) {
+                return getHijriMonthStart(year, month);
+            }
+
+            HijrahDate startDate =
+                    HijrahDate.of(year, 1, 1);
+
+            return LocalDate.ofEpochDay(
+                    startDate.toEpochDay()
+            ).atStartOfDay();
+        }
+
+        if (view.equals("months")) {
+
+            return YearMonth.of(year, month)
+                    .atDay(1)
+                    .atStartOfDay();
+        }
+
+        return LocalDate.of(year, 1, 1).atStartOfDay();
+    }
+
+
+    private LocalDateTime getPeriodEnd(
+            String calendar,
+            String view,
+            int year,
+            Integer month
+    ) {
+
+        if (calendar.equals("hijri")) {
+
+            if (view.equals("months")) {
+                return getHijriMonthEnd(year, month);
+            }
+
+            HijrahDate nextYear =
+                    HijrahDate.of(year + 1, 1, 1);
+
+            return LocalDate.ofEpochDay(
+                    nextYear.toEpochDay()
+            ).atStartOfDay();
+        }
+
+        if (view.equals("months")) {
+
+            return YearMonth.of(year, month)
+                    .plusMonths(1)
+                    .atDay(1)
+                    .atStartOfDay();
+        }
+
+        return LocalDate.of(year + 1, 1, 1).atStartOfDay();
+    }
+
+
+    private LocalDateTime getHijriMonthStart(
+            int hijriYear,
+            int hijriMonth
+    ) {
 
         HijrahDate hijriDate =
                 HijrahDate.of(hijriYear, hijriMonth, 1);
@@ -1428,11 +1579,15 @@ public class DashboardService {
         return date.atStartOfDay();
     }
 
-    private LocalDateTime getHijriMonthEnd(int hijriYear, int hijriMonth) {
+
+    private LocalDateTime getHijriMonthEnd(
+            int hijriYear,
+            int hijriMonth
+    ) {
 
         HijrahDate nextMonth =
                 HijrahDate.of(hijriYear, hijriMonth, 1)
-                        .plus(1, java.time.temporal.ChronoUnit.MONTHS);
+                        .plus(1, ChronoUnit.MONTHS);
 
         LocalDate date =
                 LocalDate.ofEpochDay(nextMonth.toEpochDay());
@@ -1440,17 +1595,24 @@ public class DashboardService {
         return date.atStartOfDay();
     }
 
-    private List<MonthlyStatisticsDto> getMonthlyStatistics(int hijriYear) {
+    private List<MonthlyStatisticsDto> getMonthlyStatistics(
+            String calendar,
+            int year
+    ) {
 
         List<MonthlyStatisticsDto> statistics = new ArrayList<>();
+
+        String[] monthNames = calendar.equals("hijri")
+                ? HIJRI_MONTH_NAMES
+                : GREGORIAN_MONTH_NAMES;
 
         for (int month = 1; month <= 12; month++) {
 
             LocalDateTime start =
-                    getHijriMonthStart(hijriYear, month);
+                    getPeriodStart(calendar, "months", year, month);
 
             LocalDateTime end =
-                    getHijriMonthEnd(hijriYear, month);
+                    getPeriodEnd(calendar, "months", year, month);
 
             long orders =
                     requestRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
@@ -1467,7 +1629,7 @@ public class DashboardService {
             statistics.add(
                     new MonthlyStatisticsDto(
                             month,
-                            HIJRI_MONTH_NAMES[month - 1],
+                            monthNames[month - 1],
                             orders,
                             revenue
                     )
@@ -1491,7 +1653,20 @@ public class DashboardService {
             "ذو القعدة",
             "ذو الحجة"
     };
-
+    private static final String[] GREGORIAN_MONTH_NAMES = {
+            "يناير",
+            "فبراير",
+            "مارس",
+            "أبريل",
+            "مايو",
+            "يونيو",
+            "يوليو",
+            "أغسطس",
+            "سبتمبر",
+            "أكتوبر",
+            "نوفمبر",
+            "ديسمبر"
+    };
     private List<HourlyOrdersDto> getHourlyOrders(
             LocalDateTime start,
             LocalDateTime end

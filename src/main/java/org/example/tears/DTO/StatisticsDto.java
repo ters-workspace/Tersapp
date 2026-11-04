@@ -15,12 +15,14 @@ public class StatisticsDto {
     private Long totalOrders;
     private BigDecimal ordersGrowthPercentage;
 
-    private Long activeCustomers;
-    private Long newCustomersThisMonth;
-
-    private BigDecimal monthlyRevenue;
+    private BigDecimal revenue;
     private BigDecimal revenueGrowthPercentage;
+
+    private Long newCustomers;
+    private Long activeCustomers;
 
     private List<MonthlyStatisticsDto> monthlyStatistics;
     private List<HourlyOrdersDto> hourlyOrders;
+
+    private PeriodDto period;
 }
