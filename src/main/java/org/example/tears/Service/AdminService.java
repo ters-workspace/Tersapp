@@ -68,6 +68,10 @@ public class AdminService {
                 dto.getFullName()
         );
 
+        user.setFullNameAr(
+                dto.getFullNameAr()
+        );
+
         user.setPhoneNumber(
                 dto.getPhoneNumber()
         );
@@ -129,6 +133,7 @@ public class AdminService {
 
         return new EmployeeLoginInfo(
                 dto.getFullName(),
+                dto.getFullNameAr(),
                 email,
                 rawPass,
                 dto.getPhoneNumber(),

@@ -10,6 +10,8 @@ public class AdminCreateEmployeeDTO {
 
     private String fullName;
 
+    private String fullNameAr;
+
     private String phoneNumber;
 
     private JobTitle jobTitle;

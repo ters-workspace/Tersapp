@@ -11,6 +11,7 @@ import org.example.tears.Enums.JobTitle;
 @NoArgsConstructor
 public class EmployeeLoginInfo {
     private String fullName;
+    private String fullNameAr;
     private String email;
     private String tempPassword;
     private String phoneNumber;

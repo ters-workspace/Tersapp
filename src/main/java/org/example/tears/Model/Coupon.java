@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.tears.Enums.CouponCustomerType;
 import org.example.tears.Enums.ServiceOption;
 
 import java.time.LocalDate;
@@ -76,8 +77,10 @@ public class Coupon {
         @Enumerated(EnumType.STRING)
         private ServiceOption serviceOption;
 
+        @Enumerated(EnumType.STRING)
         @Column(nullable = false)
-        private Boolean newUsersOnly = false;
+        private CouponCustomerType customerType =
+                CouponCustomerType.ALL_CUSTOMERS;
 
         @ManyToMany
         @JoinTable(
@@ -89,5 +92,6 @@ public class Coupon {
 
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
+        private LocalDateTime activationDate;
 
 }

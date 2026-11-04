@@ -16,6 +16,7 @@ public class Location {
     private String address;
     @Column(nullable = true)
     private String title;
+    private String city;
 
     @ManyToOne
     private Customer customer;

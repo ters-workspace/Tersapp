@@ -1,5 +1,6 @@
 package org.example.tears.InpDTO;
 import lombok.Data;
+import org.example.tears.Enums.CouponCustomerType;
 import org.example.tears.Enums.ServiceOption;
 
 import java.time.LocalDate;
@@ -17,8 +18,8 @@ public class UpdateCouponRequest {
     private Integer maxDiscountAmount;
     private Integer minimumOrderPrice;
     private Integer usageLimit;
-    private Boolean newUsersOnly;
+    private CouponCustomerType customerType;
     private LocalDate expiryDate;
     private LocalDateTime updatedAt;
-
+    private LocalDateTime activationDate;
 }

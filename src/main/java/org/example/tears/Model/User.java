@@ -24,10 +24,13 @@ public class User {
     private Integer id;
 
     @NotBlank(message = "Full name is required")
-    @Size(min = 3, max = 70, message = "First name must be between 3 and 20 characters")
+    @Size(min = 3, max = 70, message = "name must be between 3 and 20 characters")
     @Column(nullable = false)
     private String fullName;
 
+    @NotBlank(message = "Full name ar is required")
+    @Size(min = 3, max = 70, message = "name must be between 3 and 20 characters")
+    private String fullNameAr;
     @Email
     @Column(nullable = true, unique = true)
     private String email;

@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Data
 public class EmployeeListDto {
 
-    private Integer id;
+    private Integer empId;
     private String fullName;
     private String employeeCode;
     private String email;

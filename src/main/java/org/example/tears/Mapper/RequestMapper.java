@@ -562,7 +562,7 @@ public class RequestMapper {
             EmployeeListDto dto =
                     new EmployeeListDto();
 
-            dto.setId(employee.getId());
+            dto.setEmpId(employee.getId());
 
 
             dto.setFullName(
@@ -918,4 +918,69 @@ public class RequestMapper {
 
         return dto;
     }
+
+
+    public EmployeeCompletedRequestDto toEmployeeCompletedRequestDto(
+            CarServiceRequest r
+    ) {
+        EmployeeCompletedRequestDto dto =
+                new EmployeeCompletedRequestDto();
+
+        dto.setId(r.getId());
+        dto.setOrderNumber(r.getOrderNumber());
+
+        dto.setServiceName(
+                r.getServiceOption() != null
+                        ? r.getServiceOption().name()
+                        : null
+        );
+
+        if (r.getCustomer() != null &&
+                r.getCustomer().getUser() != null) {
+
+            dto.setCustomerName(
+                    r.getCustomer().getUser().getFullName()
+            );
+        }
+
+        if (r.getLocation() != null) {
+            dto.setCity(r.getLocation().getCity());
+        }
+
+        dto.setCompletedAt(r.getDeliveredAt());
+        dto.setStatus("COMPLETED");
+
+        return dto;
+    }
+    public EmployeeAssignedRequestDto toEmployeeAssignedRequestDto(
+            CarServiceRequest r
+    ) {
+        EmployeeAssignedRequestDto dto =
+                new EmployeeAssignedRequestDto();
+
+        dto.setId(r.getId());
+        dto.setOrderNumber(r.getOrderNumber());
+
+        dto.setServiceName(
+                r.getServiceOption() != null
+                        ? r.getServiceOption().name()
+                        : null
+        );
+
+        if (r.getCustomer() != null &&
+                r.getCustomer().getUser() != null) {
+
+            dto.setCustomerName(
+                    r.getCustomer().getUser().getFullName()
+            );
+
+            dto.setCustomerPhone(
+                    r.getCustomer().getUser().getPhoneNumber()
+            );
+        }
+
+        return dto;
+    }
+
+
 }

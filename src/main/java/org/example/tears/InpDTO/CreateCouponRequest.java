@@ -3,9 +3,11 @@ package org.example.tears.InpDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.tears.Enums.CouponCustomerType;
 import org.example.tears.Enums.ServiceOption;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -31,7 +33,10 @@ public class CreateCouponRequest {
 
     private LocalDate expiryDate;
 
-    private Boolean newUsersOnly;
+    private LocalDateTime activationDate;
+
+    private CouponCustomerType customerType =
+            CouponCustomerType.ALL_CUSTOMERS;
 
     private Boolean oneTimePerUser = false;
 

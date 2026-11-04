@@ -1,3 +1,4 @@
+
 package org.example.tears.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -5,6 +6,7 @@ import org.example.tears.Api.ApiException;
 import org.example.tears.DTO.CouponListDto;
 import org.example.tears.DTO.CouponStatsDto;
 import org.example.tears.DTO.CustomerCouponDto;
+import org.example.tears.Enums.CouponCustomerType;
 import org.example.tears.Enums.ServiceOption;
 import org.example.tears.InpDTO.CreateCouponRequest;
 import org.example.tears.InpDTO.UpdateCouponRequest;
@@ -15,6 +17,7 @@ import org.example.tears.Model.Customer;
 import org.example.tears.Repository.CarServiceRequestRepository;
 import org.example.tears.Repository.CouponRepository;
 import org.example.tears.Repository.CouponUsageRepository;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +32,10 @@ public class CouponService {
     private final CouponRepository couponRepository;
     private final CouponUsageRepository couponUsageRepository;
     private final CarServiceRequestRepository carServiceRequestRepository;
+
+    // =========================
+    // Create Coupon
+    // =========================
 
     public Coupon create(CreateCouponRequest dto) {
 
@@ -49,16 +56,38 @@ public class CouponService {
         coupon.setMaxDiscountAmount(dto.getMaxDiscountAmount());
         coupon.setExpiryDate(dto.getExpiryDate());
         coupon.setServiceOption(dto.getServiceOption());
-        coupon.setNewUsersOnly(
-                Boolean.TRUE.equals(dto.getNewUsersOnly())
+
+        coupon.setCustomerType(
+                dto.getCustomerType() != null
+                        ? dto.getCustomerType()
+                        : CouponCustomerType.ALL_CUSTOMERS
         );
+
         coupon.setOneTimePerUser(
                 Boolean.TRUE.equals(dto.getOneTimePerUser())
         );
-        coupon.setCreatedAt(LocalDateTime.now());
 
+        LocalDateTime now = LocalDateTime.now();
+
+        coupon.setCreatedAt(now);
+
+        if (dto.getActivationDate() == null ||
+                !dto.getActivationDate().isAfter(now)) {
+
+            coupon.setActivationDate(now);
+            coupon.setActive(true);
+
+        } else {
+
+            coupon.setActivationDate(dto.getActivationDate());
+            coupon.setActive(false);
+        }
         return couponRepository.save(coupon);
     }
+
+    // =========================
+    // Update Coupon
+    // =========================
 
     public Coupon update(Integer id, UpdateCouponRequest dto) {
 
@@ -105,13 +134,26 @@ public class CouponService {
             coupon.setExpiryDate(dto.getExpiryDate());
         }
 
-        if (dto.getNewUsersOnly() != null) {
-            coupon.setNewUsersOnly(dto.getNewUsersOnly());
+        if (dto.getCustomerType() != null) {
+            coupon.setCustomerType(dto.getCustomerType());
+        }
+
+        if (dto.getActivationDate() != null) {
+
+            coupon.setActivationDate(dto.getActivationDate());
+
+            coupon.setActive(
+                    !dto.getActivationDate().isAfter(LocalDateTime.now())
+            );
         }
         coupon.setUpdatedAt(LocalDateTime.now());
 
         return couponRepository.save(coupon);
     }
+
+    // =========================
+    // Validate Coupon
+    // =========================
 
     public Coupon validate(
             String code,
@@ -120,59 +162,38 @@ public class CouponService {
             Customer customer
     ) {
 
-        Coupon coupon =
-                couponRepository.findByCodeIgnoreCase(code)
-                        .orElseThrow(() ->
-                                new ApiException("الكوبون غير موجود")
-                        );
+        Coupon coupon = couponRepository.findByCodeIgnoreCase(code)
+                .orElseThrow(() ->
+                        new ApiException("الكوبون غير موجود")
+                );
 
-        // =========================
         // Active
-        // =========================
-
         if (!coupon.isActive()) {
             throw new ApiException("الكوبون غير متاح");
         }
 
-        if (Boolean.TRUE.equals(coupon.getNewUsersOnly())) {
-            if (customer == null || customer.getId() == null) {
-                throw new ApiException("تعذر التحقق من أهلية العميل");
-            }
-
-            boolean hasPreviousRequest =
-                    carServiceRequestRepository.existsByCustomer_Id(customer.getId());
-
-            if (hasPreviousRequest) {
-                throw new ApiException(
-                        "هذا الكوبون مخصص للعملاء الذين لم ينشئوا أي طلب خدمة سابقًا"
-                );
-            }
+        // Customer Type
+        if (!isCustomerEligible(coupon, customer)) {
+            throw new ApiException(
+                    "هذا الكوبون غير متاح لفئة العملاء الخاصة بك"
+            );
         }
 
-        // =========================
         // Expiry
-        // =========================
-
         if (coupon.getExpiryDate() != null &&
                 coupon.getExpiryDate().isBefore(LocalDate.now())) {
 
             throw new ApiException("الكوبون منتهي");
         }
 
-        // =========================
         // Service
-        // =========================
-
         if (!isServiceApplicable(coupon, option)) {
             throw new ApiException(
                     "هذا الكوبون لا ينطبق على هذه الخدمة"
             );
         }
 
-        // =========================
-        // Minimum order
-        // =========================
-
+        // Minimum Order
         if (coupon.getMinimumOrderPrice() != null &&
                 total < coupon.getMinimumOrderPrice()) {
 
@@ -181,10 +202,7 @@ public class CouponService {
             );
         }
 
-        // =========================
-        // Global usage limit
-        // =========================
-
+        // Global Usage Limit
         if (coupon.getUsageLimit() != null) {
 
             long usedCount =
@@ -193,28 +211,28 @@ public class CouponService {
                     );
 
             if (usedCount >= coupon.getUsageLimit()) {
-
                 throw new ApiException(
                         "انتهت استخدامات هذا الكوبون"
                 );
             }
         }
 
-        // =========================
-        // One time per customer
-        // =========================
-
+        // One Time Per Customer
         if (coupon.isOneTimePerUser()) {
 
+            if (customer == null || customer.getId() == null) {
+                throw new ApiException(
+                        "تعذر التحقق من استخدام الكوبون للعميل"
+                );
+            }
+
             boolean alreadyUsed =
-                    couponUsageRepository
-                            .existsByCouponIdAndCustomerId(
-                                    coupon.getId(),
-                                    customer.getId()
-                            );
+                    couponUsageRepository.existsByCouponIdAndCustomerId(
+                            coupon.getId(),
+                            customer.getId()
+                    );
 
             if (alreadyUsed) {
-
                 throw new ApiException(
                         "تم استخدام هذا الكوبون مسبقًا"
                 );
@@ -223,6 +241,43 @@ public class CouponService {
 
         return coupon;
     }
+
+    // =========================
+    // Customer Eligibility
+    // =========================
+
+    private boolean isCustomerEligible(
+            Coupon coupon,
+            Customer customer
+    ) {
+
+        if (coupon.getCustomerType() == null ||
+                coupon.getCustomerType() == CouponCustomerType.ALL_CUSTOMERS) {
+            return true;
+        }
+
+        if (customer == null || customer.getId() == null) {
+            return false;
+        }
+
+        boolean hasPreviousRequest =
+                carServiceRequestRepository.existsByCustomer_Id(
+                        customer.getId()
+                );
+
+        return switch (coupon.getCustomerType()) {
+
+            case ALL_CUSTOMERS -> true;
+
+            case NEW_CUSTOMERS -> !hasPreviousRequest;
+
+            case EXISTING_CUSTOMERS -> hasPreviousRequest;
+        };
+    }
+
+    // =========================
+    // Service Eligibility
+    // =========================
 
     private boolean isServiceApplicable(
             Coupon coupon,
@@ -233,9 +288,17 @@ public class CouponService {
                 || coupon.getServiceOption() == serviceOption;
     }
 
+    // =========================
+    // Get All Coupons
+    // =========================
+
     public List<Coupon> getAll() {
         return couponRepository.findAll();
     }
+
+    // =========================
+    // Disable Coupon
+    // =========================
 
     public Coupon disableCoupon(Integer id) {
 
@@ -247,6 +310,10 @@ public class CouponService {
         return couponRepository.save(coupon);
     }
 
+    // =========================
+    // Enable Coupon
+    // =========================
+
     public Coupon enableCoupon(Integer id) {
 
         Coupon coupon = couponRepository.findById(id)
@@ -257,6 +324,10 @@ public class CouponService {
         return couponRepository.save(coupon);
     }
 
+    // =========================
+    // Get Valid Coupons For Customer
+    // =========================
+
     public List<CustomerCouponDto> getCustomerValidCoupons(
             Customer customer
     ) {
@@ -266,16 +337,16 @@ public class CouponService {
         return couponRepository.findAll()
                 .stream()
 
-                // الكوبون مفعل
+                // Active
                 .filter(Coupon::isActive)
 
-                // غير منتهي
+                // Not Expired
                 .filter(coupon ->
                         coupon.getExpiryDate() == null ||
                                 !coupon.getExpiryDate().isBefore(today)
                 )
 
-                // ما تجاوز الاستخدامات العامة
+                // Global Usage Limit
                 .filter(coupon -> {
 
                     if (coupon.getUsageLimit() == null) {
@@ -290,12 +361,15 @@ public class CouponService {
                     return usedCount < coupon.getUsageLimit();
                 })
 
-                // لو One Time Per User:
-                // العميل ما يكون استخدمه قبل
+                // One Time Per User
                 .filter(coupon -> {
 
                     if (!coupon.isOneTimePerUser()) {
                         return true;
+                    }
+
+                    if (customer == null || customer.getId() == null) {
+                        return false;
                     }
 
                     return !couponUsageRepository
@@ -305,16 +379,12 @@ public class CouponService {
                             );
                 })
 
-                .filter(coupon -> {
-                    if (!Boolean.TRUE.equals(coupon.getNewUsersOnly())) {
-                        return true;
-                    }
+                // Customer Type
+                .filter(coupon ->
+                        isCustomerEligible(coupon, customer)
+                )
 
-                    return !carServiceRequestRepository.existsByCustomer_Id(
-                            customer.getId()
-                    );
-                })
-
+                // Map To DTO
                 .map(coupon -> {
 
                     CustomerCouponDto dto =
@@ -353,6 +423,10 @@ public class CouponService {
                 .toList();
     }
 
+    // =========================
+    // Record Coupon Usage
+    // =========================
+
     @Transactional
     public void recordCouponUsage(
             Coupon coupon,
@@ -377,11 +451,10 @@ public class CouponService {
         if (coupon.isOneTimePerUser()) {
 
             boolean alreadyUsed =
-                    couponUsageRepository
-                            .existsByCouponIdAndCustomerId(
-                                    coupon.getId(),
-                                    customer.getId()
-                            );
+                    couponUsageRepository.existsByCouponIdAndCustomerId(
+                            coupon.getId(),
+                            customer.getId()
+                    );
 
             if (alreadyUsed) {
                 throw new ApiException(
@@ -399,7 +472,7 @@ public class CouponService {
 
         couponUsageRepository.save(usage);
 
-        // زيادة العداد
+        // Increase usage count
         coupon.setUsedCount(
                 coupon.getUsedCount() == null
                         ? 1
@@ -409,19 +482,19 @@ public class CouponService {
         couponRepository.save(coupon);
     }
 
+    // =========================
+    // Coupon Statistics
+    // =========================
+
     public CouponStatsDto getCouponStats() {
 
-        long totalCoupons =
-                couponRepository.count();
+        long totalCoupons = couponRepository.count();
 
-        long activeCoupons =
-                couponRepository.countByActiveTrue();
+        long activeCoupons = couponRepository.countByActiveTrue();
 
-        LocalDate today =
-                LocalDate.now();
+        LocalDate today = LocalDate.now();
 
-        LocalDate sevenDaysLater =
-                today.plusDays(7);
+        LocalDate sevenDaysLater = today.plusDays(7);
 
         long expiringSoon =
                 couponRepository
@@ -437,27 +510,22 @@ public class CouponService {
         );
     }
 
-    private CouponListDto toCouponListDto(
-            Coupon coupon
-    ) {
+    // =========================
+    // Convert Coupon To Admin DTO
+    // =========================
 
-        CouponListDto dto =
-                new CouponListDto();
+    private CouponListDto toCouponListDto(Coupon coupon) {
 
-        dto.setId(
-                coupon.getId()
-        );
+        CouponListDto dto = new CouponListDto();
 
-        dto.setCode(
-                coupon.getCode()
-        );
+        dto.setId(coupon.getId());
 
-        // نوع وقيمة الخصم
+        dto.setCode(coupon.getCode());
+
+        // Discount Type And Value
         if (coupon.getDiscountPercentage() != null) {
 
-            dto.setDiscountType(
-                    "PERCENTAGE"
-            );
+            dto.setDiscountType("PERCENTAGE");
 
             dto.setDiscountValue(
                     coupon.getDiscountPercentage() + "%"
@@ -465,9 +533,7 @@ public class CouponService {
 
         } else if (coupon.getFixedDiscount() != null) {
 
-            dto.setDiscountType(
-                    "FIXED"
-            );
+            dto.setDiscountType("FIXED");
 
             dto.setDiscountValue(
                     coupon.getFixedDiscount() + " SAR"
@@ -475,13 +541,9 @@ public class CouponService {
 
         } else {
 
-            dto.setDiscountType(
-                    "UNKNOWN"
-            );
+            dto.setDiscountType("UNKNOWN");
 
-            dto.setDiscountValue(
-                    "0"
-            );
+            dto.setDiscountValue("0");
         }
 
         dto.setUsedCount(
@@ -490,55 +552,56 @@ public class CouponService {
                         : coupon.getUsedCount()
         );
 
-        dto.setUsageLimit(
-                coupon.getUsageLimit()
-        );
+        dto.setUsageLimit(coupon.getUsageLimit());
 
-        dto.setExpiryDate(
-                coupon.getExpiryDate()
-        );
+        dto.setExpiryDate(coupon.getExpiryDate());
 
-        dto.setActive(
-                coupon.isActive()
-        );
+        dto.setActive(coupon.isActive());
+
+        dto.setCustomerType(coupon.getCustomerType());
 
         return dto;
     }
+
+    // =========================
+    // Get All For Admin
+    // =========================
+
     public List<CouponListDto> getAllForAdmin() {
 
-        return couponRepository
-                .findAll()
+        return couponRepository.findAll()
                 .stream()
                 .map(this::toCouponListDto)
                 .toList();
     }
 
-    public List<CouponListDto> searchForAdmin(
-            String search
-    ) {
+    // =========================
+    // Search For Admin
+    // =========================
 
-        if (search == null ||
-                search.isBlank()) {
+    public List<CouponListDto> searchForAdmin(String search) {
 
+        if (search == null || search.isBlank()) {
             return getAllForAdmin();
         }
 
-        return couponRepository
-                .searchCoupons(
-                        search.trim()
-                )
+        return couponRepository.searchCoupons(search.trim())
                 .stream()
                 .map(this::toCouponListDto)
                 .toList();
     }
 
+    // =========================
+    // Delete Coupon
+    // =========================
 
     @Transactional
     public void deleteCoupon(Integer id) {
 
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(() ->
-                        new ApiException("الكوبون غير موجود"));
+                        new ApiException("الكوبون غير موجود")
+                );
 
         long usageCount =
                 couponUsageRepository.countByCouponId(id);
@@ -552,5 +615,24 @@ public class CouponService {
         couponRepository.delete(coupon);
     }
 
+        @Scheduled(fixedDelay = 60000)
+        @Transactional
+        public void activateScheduledCoupons() {
 
+            LocalDateTime now = LocalDateTime.now();
+
+            List<Coupon> coupons =
+                    couponRepository
+                            .findAllByActiveFalseAndActivationDateLessThanEqual(now);
+
+            if (coupons.isEmpty()) {
+                return;
+            }
+
+            for (Coupon coupon : coupons) {
+                coupon.setActive(true);
+            }
+
+            couponRepository.saveAll(coupons);
+        }
 }

@@ -5,6 +5,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import org.example.tears.Enums.CouponCustomerType;
 import org.example.tears.Enums.ServiceOption;
 
 import java.time.LocalDate;
@@ -34,6 +35,8 @@ public class CouponListDto {
     private Integer usedCount;
 
     private Integer usageLimit;
+
+    private CouponCustomerType customerType;
 
     private LocalDateTime createdAt;
 

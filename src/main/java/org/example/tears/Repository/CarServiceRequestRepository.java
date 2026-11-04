@@ -252,4 +252,45 @@ WHERE
             @Param("employeeId") Integer employeeId,
             @Param("excludedStatus") StaffRequestStatus excludedStatus
     );
+
+    @Query("""
+    SELECT r
+    FROM CarServiceRequest r
+    LEFT JOIN r.customer c
+    LEFT JOIN c.user u
+    WHERE r.staffStatus = :status
+    AND (
+        r.assignedTechnician.id = :employeeId
+        OR r.assignedPricingEmployee.id = :employeeId
+        OR r.assignedSupportEmployee.id = :employeeId
+    )
+    AND (
+        :search IS NULL
+        OR LOWER(r.orderNumber) LIKE LOWER(CONCAT('%', :search, '%'))
+        OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
+    )
+    ORDER BY r.deliveredAt DESC
+""")
+    List<CarServiceRequest> findCompletedRequestsByEmployee(
+            @Param("employeeId") Integer employeeId,
+            @Param("status") StaffRequestStatus status,
+            @Param("search") String search
+    );
+
+    @Query("""
+    SELECT r
+    FROM CarServiceRequest r
+    LEFT JOIN r.customer c
+    LEFT JOIN c.user u
+    WHERE r.currentEmployee.id = :employeeId
+    AND (
+        r.staffStatus <> :excludedStatus
+        OR r.staffStatus IS NULL
+    )
+    ORDER BY r.createdAt DESC
+""")
+    List<CarServiceRequest> findAssignedRequestsByEmployee(
+            @Param("employeeId") Integer employeeId,
+            @Param("excludedStatus") StaffRequestStatus excludedStatus
+    );
 }

@@ -209,4 +209,23 @@ public class AdminController {
                 )
         );
     }
+    @GetMapping("/employees/{employeeId}/completed-requests")
+    public ResponseEntity<List<EmployeeCompletedRequestDto>> getEmployeeCompletedRequests(
+            @PathVariable Integer employeeId,
+            @RequestParam(required = false) String search
+    ) {
+        return ResponseEntity.ok(
+                dashboardService.getEmployeeCompletedRequests(employeeId, search)
+        );
+    }
+
+    @GetMapping("/employees/{employeeId}/assigned-requests")
+    public ResponseEntity<List<EmployeeAssignedRequestDto>> getEmployeeAssignedRequests(
+            @PathVariable Integer employeeId
+    ) {
+        return ResponseEntity.ok(
+                dashboardService.getEmployeeAssignedRequests(employeeId)
+        );
+    }
+
 }

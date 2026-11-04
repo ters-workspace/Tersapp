@@ -1733,4 +1733,42 @@ public class DashboardService {
                 .multiply(BigDecimal.valueOf(100))
                 .setScale(2, java.math.RoundingMode.HALF_UP);
     }
+
+    public List<EmployeeCompletedRequestDto> getEmployeeCompletedRequests(
+            Integer employeeId,
+            String search
+    ) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new ApiException("Employee not found"));
+
+        String keyword = (search == null || search.isBlank())
+                ? null
+                : search.trim();
+
+        return requestRepository.findCompletedRequestsByEmployee(
+                        employee.getId(),
+                        StaffRequestStatus.DELIVERED,
+                        keyword
+                )
+                .stream()
+                .map(requestMapper::toEmployeeCompletedRequestDto)
+                .toList();
+    }
+
+    public List<EmployeeAssignedRequestDto> getEmployeeAssignedRequests(
+            Integer employeeId
+    ) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new ApiException("Employee not found"));
+
+        return requestRepository.findAssignedRequestsByEmployee(
+                        employee.getId(),
+                        StaffRequestStatus.DELIVERED
+                )
+                .stream()
+                .map(requestMapper::toEmployeeAssignedRequestDto)
+                .toList();
+    }
+
+    
 }
