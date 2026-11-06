@@ -6,6 +6,7 @@ import org.example.tears.Api.ApiResponse;
 import org.example.tears.Config.PasswordGenerator;
 import org.example.tears.Config.TempEmailGenerator;
 import org.example.tears.DTO.EmployeeListDto;
+import org.example.tears.Enums.PricingStatus;
 import org.example.tears.Enums.StaffRequestStatus;
 import org.example.tears.Enums.UserRole;
 import org.example.tears.Enums.UserStatus;
@@ -164,6 +165,7 @@ public class AdminService {
             long assignedRequests =
                     requestRepo.countAssignedRequestsByEmployee(
                             employee.getId(),
+                            List.of(PricingStatus.values()),
                             StaffRequestStatus.DELIVERED
                     );
 
@@ -187,5 +189,6 @@ public class AdminService {
 
         return new ApiResponse(true,"Employee deactivated");
     }
+
 
 }

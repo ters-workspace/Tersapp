@@ -107,8 +107,8 @@ public class PaymentIntentService {
         intent.setPricingMessage(draft.getPricingMessage());
 
         intent.setPaymentStatus(PaymentStatus.INITIATED);
-        intent.setExpiresAt(LocalDateTime.now().plusMinutes(5));
-        intent.setCreatedAt(LocalDateTime.now());
+        intent.setExpiresAt(TimeUtil.now().plusMinutes(5));
+        intent.setCreatedAt(TimeUtil.now());
 
         paymentIntentRepository.save(intent);
 
@@ -198,8 +198,8 @@ public class PaymentIntentService {
         req.setCustomerStatus(CustomerRequestStatus.REQUEST_CREATED);
         req.setStaffStatus(StaffRequestStatus.NEW);
         req.setStage(WorkflowStage.NEW_REQUEST);
-        req.setLastUpdated(LocalDateTime.now());
-        req.setCreatedAt(LocalDateTime.now());
+        req.setCreatedAt(TimeUtil.now());
+        req.setLastUpdated(TimeUtil.now());
 
         CarServiceRequest savedRequest = requestRepository.save(req);
 
@@ -287,7 +287,7 @@ public class PaymentIntentService {
         );
 
         approval.setApproved(true);
-        approval.setDecisionAt(LocalDateTime.now());
+        approval.setDecisionAt(TimeUtil.now());
         approvalRepo.save(approval);
 
         request.setFinalPaid(true);
@@ -296,8 +296,8 @@ public class PaymentIntentService {
         request.setCustomerStatus(CustomerRequestStatus.UNDER_REPAIR);
         request.setStaffStatus(StaffRequestStatus.REPAIRING);
         request.setStage(WorkflowStage.REPAIRING);
-        request.setRepairAt(LocalDateTime.now());
-        request.setLastUpdated(LocalDateTime.now());
+        request.setRepairAt(TimeUtil.now());
+        request.setLastUpdated(TimeUtil.now());
 
         requestRepository.save(request);
 
@@ -366,7 +366,7 @@ public class PaymentIntentService {
         }
 
         if (intent.getExpiresAt() != null
-                && intent.getExpiresAt().isBefore(LocalDateTime.now())) {
+                && intent.getExpiresAt().isBefore(TimeUtil.now())) {
             intent.setPaymentStatus(PaymentStatus.EXPIRED);
             paymentIntentRepository.save(intent);
             throw new ApiException("Payment intent expired");
@@ -410,8 +410,8 @@ public class PaymentIntentService {
         req.setCustomerStatus(CustomerRequestStatus.REQUEST_CREATED);
         req.setStaffStatus(StaffRequestStatus.NEW);
         req.setStage(WorkflowStage.NEW_REQUEST);
-        req.setLastUpdated(LocalDateTime.now());
-        req.setCreatedAt(LocalDateTime.now());
+        req.setLastUpdated(TimeUtil.now());
+        req.setCreatedAt(TimeUtil.now());
 
         CarServiceRequest savedRequest = requestRepository.save(req);
 
@@ -429,7 +429,7 @@ public class PaymentIntentService {
         intent.setServiceRequest(savedRequest);
         intent.setPaymentStatus(PaymentStatus.PAID);
         intent.setPaymentId(paymentId);
-        intent.setPaidAt(LocalDateTime.now());
+        intent.setPaidAt(TimeUtil.now());
 
         paymentIntentRepository.save(intent);
 
@@ -530,8 +530,8 @@ public class PaymentIntentService {
         // لا يتم اعتماد التقرير أو اعتبار الطلب مدفوعًا هنا.
         // تأكيد الدفع وتحديث حالة الطلب يتم في callback بعد نجاح الدفع.
         intent.setPaymentStatus(PaymentStatus.INITIATED);
-        intent.setCreatedAt(LocalDateTime.now());
-        intent.setExpiresAt(LocalDateTime.now().plusMinutes(5));
+        intent.setCreatedAt(TimeUtil.now());
+        intent.setExpiresAt(TimeUtil.now().plusMinutes(5));
 
         paymentIntentRepository.save(intent);
 
@@ -621,7 +621,7 @@ public class PaymentIntentService {
                                 new ApiException("Approval not found"));
 
         approval.setApproved(true);
-        approval.setDecisionAt(LocalDateTime.now());
+        approval.setDecisionAt(TimeUtil.now());
         approvalRepo.save(approval);
 
         request.setFinalPaid(true);
@@ -631,8 +631,8 @@ public class PaymentIntentService {
         request.setCustomerStatus(CustomerRequestStatus.UNDER_REPAIR);
         request.setStaffStatus(StaffRequestStatus.REPAIRING);
         request.setStage(WorkflowStage.REPAIRING);
-        request.setRepairAt(LocalDateTime.now());
-        request.setLastUpdated(LocalDateTime.now());
+        request.setRepairAt(TimeUtil.now());
+        request.setLastUpdated(TimeUtil.now());
 
         requestRepository.save(request);
 
@@ -648,7 +648,7 @@ public class PaymentIntentService {
 
         intent.setPaymentStatus(PaymentStatus.PAID);
         intent.setPaymentId(paymentId);
-        intent.setPaidAt(LocalDateTime.now());
+        intent.setPaidAt(TimeUtil.now());
 
         paymentIntentRepository.save(intent);
 
@@ -725,7 +725,7 @@ public class PaymentIntentService {
             }
 
             approval.setApproved(true);
-            approval.setDecisionAt(LocalDateTime.now());
+            approval.setDecisionAt(TimeUtil.now());
             approvalRepo.save(approval);
 
             request.setFinalPaid(true);
@@ -744,8 +744,8 @@ public class PaymentIntentService {
                 );
             }
 
-            request.setRepairAt(LocalDateTime.now());
-            request.setLastUpdated(LocalDateTime.now());
+            request.setRepairAt(TimeUtil.now());
+            request.setLastUpdated(TimeUtil.now());
 
             requestRepository.save(request);
 
@@ -817,7 +817,7 @@ public class PaymentIntentService {
         intent.setPaymentStatus(PaymentStatus.PAID);
         intent.setPaymentId(paymentId);
         intent.setServiceRequest(request);
-        intent.setPaidAt(LocalDateTime.now());
+        intent.setPaidAt(TimeUtil.now());
 
         paymentIntentRepository.save(intent);
 
@@ -861,8 +861,8 @@ public class PaymentIntentService {
         );
         intent.setInitialPaymentMethod(draft.getPaymentMethod());
         intent.setPaymentStatus(PaymentStatus.INITIATED);
-        intent.setCreatedAt(LocalDateTime.now());
-        intent.setExpiresAt(LocalDateTime.now().plusMinutes(5));
+        intent.setCreatedAt(TimeUtil.now());
+        intent.setExpiresAt(TimeUtil.now().plusMinutes(5));
 
         String givenId = UUID.randomUUID().toString();
         intent.setGivenId(givenId);
@@ -1084,8 +1084,8 @@ public class PaymentIntentService {
         req.setCustomerStatus(CustomerRequestStatus.REQUEST_CREATED);
         req.setStaffStatus(StaffRequestStatus.NEW);
         req.setStage(WorkflowStage.NEW_REQUEST);
-        req.setCreatedAt(LocalDateTime.now());
-        req.setLastUpdated(LocalDateTime.now());
+        req.setCreatedAt(TimeUtil.now());
+        req.setLastUpdated(TimeUtil.now());
 
         User customerUser = req.getCustomer().getUser();
 
@@ -1197,7 +1197,7 @@ public class PaymentIntentService {
             boolean notExpired =
                     existingIntent.getExpiresAt() != null
                             && existingIntent.getExpiresAt()
-                            .isAfter(LocalDateTime.now());
+                            .isAfter(TimeUtil.now());
 
             boolean paymentStillActive =
                     status == PaymentStatus.INITIATED
@@ -1224,9 +1224,9 @@ public class PaymentIntentService {
             int amount = request.getFinalPrice() * 100;
             existingIntent.setInitialPaymentAmountHalalah(amount);
             existingIntent.setPaymentStatus(PaymentStatus.INITIATED);
-            existingIntent.setCreatedAt(LocalDateTime.now());
+            existingIntent.setCreatedAt(TimeUtil.now());
             existingIntent.setExpiresAt(
-                    LocalDateTime.now().plusMinutes(5)
+                    TimeUtil.now().plusMinutes(5)
             );
             existingIntent.setGivenId(UUID.randomUUID().toString());
             existingIntent.setPaymentId(null);
@@ -1256,8 +1256,8 @@ public class PaymentIntentService {
         int amount = request.getFinalPrice() * 100;
         intent.setInitialPaymentAmountHalalah(amount);
         intent.setPaymentStatus(PaymentStatus.INITIATED);
-        intent.setCreatedAt(LocalDateTime.now());
-        intent.setExpiresAt(LocalDateTime.now().plusMinutes(5));
+        intent.setCreatedAt(TimeUtil.now());
+        intent.setExpiresAt(TimeUtil.now().plusMinutes(5));
         intent.setGivenId(UUID.randomUUID().toString());
         intent.setType(PaymentIntentType.FINAL_PAYMENT);
 

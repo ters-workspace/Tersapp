@@ -125,8 +125,8 @@ public class RequestMapper {
         );
 
         // ===========================
-// Warranty
-// ===========================
+        // Warranty
+        // ===========================
 
         dto.setWarrantyEligible(
                 isWarrantyEligible(r)

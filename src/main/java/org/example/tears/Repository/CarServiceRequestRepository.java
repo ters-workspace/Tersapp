@@ -229,30 +229,43 @@ WHERE
             @Param("end") LocalDateTime end
     );
 
-    @Query("""
-    SELECT HOUR(r.createdAt), COUNT(r)
-    FROM CarServiceRequest r
-    WHERE r.createdAt >= :start
-    AND r.createdAt < :end
-    GROUP BY HOUR(r.createdAt)
-    ORDER BY HOUR(r.createdAt)
-""")
+    @Query(value = """
+    SELECT
+        HOUR(DATE_ADD(created_at, INTERVAL 3 HOUR)) AS hour,
+        COUNT(*) AS total
+    FROM car_service_request
+    WHERE created_at >= :start
+      AND created_at < :end
+    GROUP BY HOUR(DATE_ADD(created_at, INTERVAL 3 HOUR))
+    ORDER BY hour
+    """, nativeQuery = true)
     List<Object[]> countOrdersByHour(
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
 
     @Query("""
-    SELECT COUNT(r)
+    SELECT COUNT(DISTINCT r)
     FROM CarServiceRequest r
-    WHERE r.currentEmployee.id = :employeeId
-    AND (r.staffStatus <> :excludedStatus OR r.staffStatus IS NULL)
+    WHERE
+        (
+            r.assignedPricingEmployee.id = :employeeId
+            AND r.pricingStatus IN :pricingStatuses
+        )
+        OR
+        (
+            r.assignedTechnician.id = :employeeId
+            AND (
+                r.staffStatus <> :deliveredStatus
+                OR r.staffStatus IS NULL
+            )
+        )
 """)
     long countAssignedRequestsByEmployee(
             @Param("employeeId") Integer employeeId,
-            @Param("excludedStatus") StaffRequestStatus excludedStatus
+            @Param("pricingStatuses") List<PricingStatus> pricingStatuses,
+            @Param("deliveredStatus") StaffRequestStatus deliveredStatus
     );
-
     @Query("""
     SELECT r
     FROM CarServiceRequest r
@@ -278,19 +291,35 @@ WHERE
     );
 
     @Query("""
-    SELECT r
+    SELECT DISTINCT r
     FROM CarServiceRequest r
-    LEFT JOIN r.customer c
-    LEFT JOIN c.user u
-    WHERE r.currentEmployee.id = :employeeId
-    AND (
-        r.staffStatus <> :excludedStatus
-        OR r.staffStatus IS NULL
-    )
+    WHERE
+        (
+            r.assignedPricingEmployee.id = :employeeId
+            AND r.pricingStatus IN :pricingStatuses
+        )
+        OR
+        (
+            r.assignedTechnician.id = :employeeId
+            AND (
+                r.staffStatus <> :deliveredStatus
+                OR r.staffStatus IS NULL
+            )
+        )
     ORDER BY r.createdAt DESC
 """)
     List<CarServiceRequest> findAssignedRequestsByEmployee(
             @Param("employeeId") Integer employeeId,
-            @Param("excludedStatus") StaffRequestStatus excludedStatus
+            @Param("pricingStatuses") List<PricingStatus> pricingStatuses,
+            @Param("deliveredStatus") StaffRequestStatus deliveredStatus
     );
+
+    @Query("""
+    SELECT r.createdAt
+    FROM CarServiceRequest r
+    WHERE r.createdAt IS NOT NULL
+""")
+    List<LocalDateTime> findAllCreatedAt();
+
+
 }

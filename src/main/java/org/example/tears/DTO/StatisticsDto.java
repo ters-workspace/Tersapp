@@ -23,6 +23,8 @@ public class StatisticsDto {
 
     private List<MonthlyStatisticsDto> monthlyStatistics;
     private List<HourlyOrdersDto> hourlyOrders;
+    private List<Integer> availableYears;
 
     private PeriodDto period;
+
 }

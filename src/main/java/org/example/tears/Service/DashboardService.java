@@ -14,6 +14,14 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.chrono.HijrahDate;
+import java.time.temporal.ChronoField;
+import java.util.Set;
+import java.util.TreeSet;
 
 import java.time.chrono.HijrahDate;
 import java.time.temporal.ChronoField;
@@ -21,14 +29,23 @@ import java.time.temporal.ChronoField;
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
+    private LocalDateTime toUtc(LocalDateTime riyadhDateTime) {
 
+        return riyadhDateTime
+                .atZone(RIYADH_ZONE)
+                .withZoneSameInstant(UTC_ZONE)
+                .toLocalDateTime();
+    }
     private final CarServiceRequestRepository requestRepository;
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
     private final TicketRepository ticketRepository;
     private final WarrantyRepository warrantyRepository;
     private final RequestMapper requestMapper;
-
+    private static final ZoneId RIYADH_ZONE =
+            ZoneId.of("Asia/Riyadh");
+    private static final ZoneId UTC_ZONE =
+            ZoneOffset.UTC;
     public DashboardDto getDashboard() {
 
         // =========================
@@ -47,11 +64,9 @@ public class DashboardService {
                         + requests.size()
         );
 
-        YearMonth currentMonth =
-                YearMonth.now();
+        YearMonth currentMonth = YearMonth.now(RIYADH_ZONE);
 
-        YearMonth previousMonth =
-                currentMonth.minusMonths(1);
+        YearMonth previousMonth = currentMonth.minusMonths(1);
 
         LocalDateTime currentMonthStart =
                 currentMonth.atDay(1).atStartOfDay();
@@ -62,21 +77,25 @@ public class DashboardService {
                         .atStartOfDay();
 
         LocalDateTime previousMonthStart =
-                previousMonth.atDay(1)
-                        .atStartOfDay();
+                previousMonth.atDay(1).atStartOfDay();
+
+// Convert Riyadh boundaries to UTC
+        LocalDateTime currentMonthStartUtc = toUtc(currentMonthStart);
+        LocalDateTime nextMonthStartUtc = toUtc(nextMonthStart);
+        LocalDateTime previousMonthStartUtc = toUtc(previousMonthStart);
 
         long currentMonthRequests =
                 requestRepository
                         .countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
-                                currentMonthStart,
-                                nextMonthStart
+                                currentMonthStartUtc,
+                                nextMonthStartUtc
                         );
 
         long previousMonthRequests =
                 requestRepository
                         .countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
-                                previousMonthStart,
-                                currentMonthStart
+                                previousMonthStartUtc,
+                                currentMonthStartUtc
                         );
 
         BigDecimal requestsGrowthPercentage =
@@ -111,7 +130,7 @@ public class DashboardService {
                         .countByUser_StatusAndJobTitleInAndUser_CreatedAtGreaterThanEqual(
                                 UserStatus.ACTIVE,
                                 employeeJobTitles,
-                                monthStart
+                                currentMonthStartUtc
                         );
 
 
@@ -131,15 +150,16 @@ public class DashboardService {
         // TODAY
         // =========================
 
-        LocalDate today =
-                LocalDate.now();
+        LocalDate today = LocalDate.now(RIYADH_ZONE);
 
         LocalDateTime todayStart =
                 today.atStartOfDay();
 
         LocalDateTime tomorrowStart =
-                today.plusDays(1)
-                        .atStartOfDay();
+                today.plusDays(1).atStartOfDay();
+
+        LocalDateTime todayStartUtc = toUtc(todayStart);
+        LocalDateTime tomorrowStartUtc = toUtc(tomorrowStart);
 
 
         // =========================
@@ -155,8 +175,8 @@ public class DashboardService {
         long todayRequests =
                 requestRepository
                         .countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
-                                todayStart,
-                                tomorrowStart
+                                todayStartUtc,
+                                tomorrowStartUtc
                         );
 
         CustomerAppStats customerApp =
@@ -175,8 +195,8 @@ public class DashboardService {
                 requestRepository
                         .countByStaffStatusNotAndLastUpdatedGreaterThanEqualAndLastUpdatedLessThan(
                                 StaffRequestStatus.NEW,
-                                todayStart,
-                                tomorrowStart
+                                todayStartUtc,
+                                tomorrowStartUtc
                         );
 
         EmployeeAppStats employeeApp =
@@ -201,8 +221,8 @@ public class DashboardService {
         long todayTickets =
                 ticketRepository
                         .countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
-                                todayStart,
-                                tomorrowStart
+                                todayStartUtc,
+                                tomorrowStartUtc
                         );
 
         CustomerServiceStats customerService =
@@ -296,6 +316,7 @@ public class DashboardService {
             long assignedRequests =
                     requestRepository.countAssignedRequestsByEmployee(
                             employee.getId(),
+                            List.of(PricingStatus.values()),
                             StaffRequestStatus.DELIVERED
                     );
 
@@ -1318,7 +1339,6 @@ public class DashboardService {
             Integer month
     ) {
 
-        // Validate parameters
         calendar = calendar.toLowerCase(Locale.ROOT);
         view = view.toLowerCase(Locale.ROOT);
 
@@ -1334,10 +1354,9 @@ public class DashboardService {
             );
         }
 
-        // Get current date according to selected calendar
-        LocalDate today = LocalDate.now();
-
-        HijrahDate todayHijri = HijrahDate.now();
+        // Current date according to Riyadh timezone
+        LocalDate today = LocalDate.now(RIYADH_ZONE);
+        HijrahDate todayHijri = HijrahDate.now(RIYADH_ZONE);
 
         if (year == null) {
             year = calendar.equals("hijri")
@@ -1345,7 +1364,6 @@ public class DashboardService {
                     : today.getYear();
         }
 
-        // Month is required only for monthly view
         if (view.equals("months")) {
 
             if (month == null) {
@@ -1364,12 +1382,16 @@ public class DashboardService {
             month = null;
         }
 
-        // Selected period
+        // Selected period in Riyadh timezone
         LocalDateTime currentStart =
                 getPeriodStart(calendar, view, year, month);
 
         LocalDateTime currentEnd =
                 getPeriodEnd(calendar, view, year, month);
+
+        // Convert selected period to UTC for database queries
+        LocalDateTime currentStartUtc = toUtc(currentStart);
+        LocalDateTime currentEndUtc = toUtc(currentEnd);
 
         // Previous period
         int previousYear = year;
@@ -1418,17 +1440,21 @@ public class DashboardService {
                         previousMonth
                 );
 
+        // Convert previous period to UTC
+        LocalDateTime previousStartUtc = toUtc(previousStart);
+        LocalDateTime previousEndUtc = toUtc(previousEnd);
+
         // Orders
         long currentOrders =
                 requestRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
-                        currentStart,
-                        currentEnd
+                        currentStartUtc,
+                        currentEndUtc
                 );
 
         long previousOrders =
                 requestRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
-                        previousStart,
-                        previousEnd
+                        previousStartUtc,
+                        previousEndUtc
                 );
 
         BigDecimal ordersGrowthPercentage =
@@ -1447,21 +1473,21 @@ public class DashboardService {
         long newCustomers =
                 userRepository.countByRoleAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
                         UserRole.CUSTOMER,
-                        currentStart,
-                        currentEnd
+                        currentStartUtc,
+                        currentEndUtc
                 );
 
         // Revenue
         BigDecimal revenue =
                 requestRepository.sumFinalPriceBetween(
-                        currentStart,
-                        currentEnd
+                        currentStartUtc,
+                        currentEndUtc
                 );
 
         BigDecimal previousRevenue =
                 requestRepository.sumFinalPriceBetween(
-                        previousStart,
-                        previousEnd
+                        previousStartUtc,
+                        previousEndUtc
                 );
 
         BigDecimal revenueGrowthPercentage =
@@ -1470,15 +1496,19 @@ public class DashboardService {
                         previousRevenue
                 );
 
-        // Monthly chart: always 12 months
+        // Monthly chart
         List<MonthlyStatisticsDto> monthlyStatistics =
                 getMonthlyStatistics(calendar, year);
 
-        // Hourly chart
+        // Hourly chart according to Riyadh timezone
         List<HourlyOrdersDto> hourlyOrders =
                 getHourlyOrders(currentStart, currentEnd);
 
-        // Period information
+        // Years that contain orders according to selected calendar
+        List<Integer> availableYears =
+                getAvailableYears(calendar);
+
+        // Period information remains in Riyadh dates
         PeriodDto period = new PeriodDto(
                 calendar,
                 view,
@@ -1497,6 +1527,7 @@ public class DashboardService {
                 activeCustomers,
                 monthlyStatistics,
                 hourlyOrders,
+                availableYears,
                 period
         );
     }
@@ -1608,22 +1639,27 @@ public class DashboardService {
 
         for (int month = 1; month <= 12; month++) {
 
+            // Get month boundaries in Riyadh timezone
             LocalDateTime start =
                     getPeriodStart(calendar, "months", year, month);
 
             LocalDateTime end =
                     getPeriodEnd(calendar, "months", year, month);
 
+            // Convert boundaries to UTC
+            LocalDateTime startUtc = toUtc(start);
+            LocalDateTime endUtc = toUtc(end);
+
             long orders =
                     requestRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
-                            start,
-                            end
+                            startUtc,
+                            endUtc
                     );
 
             BigDecimal revenue =
                     requestRepository.sumFinalPriceBetween(
-                            start,
-                            end
+                            startUtc,
+                            endUtc
                     );
 
             statistics.add(
@@ -1672,8 +1708,14 @@ public class DashboardService {
             LocalDateTime end
     ) {
 
+        LocalDateTime startUtc = toUtc(start);
+        LocalDateTime endUtc = toUtc(end);
+
         List<Object[]> results =
-                requestRepository.countOrdersByHour(start, end);
+                requestRepository.countOrdersByHour(
+                        startUtc,
+                        endUtc
+                );
 
         Map<Integer, Long> ordersByHour = new HashMap<>();
 
@@ -1705,6 +1747,44 @@ public class DashboardService {
         return hourlyOrders;
     }
 
+    private List<Integer> getAvailableYears(String calendar) {
+
+        List<LocalDateTime> createdDates =
+                requestRepository.findAllCreatedAt();
+
+        Set<Integer> years = new TreeSet<>(Comparator.reverseOrder());
+
+        for (LocalDateTime createdAt : createdDates) {
+
+            if (createdAt == null) {
+                continue;
+            }
+
+            // Database timestamp is stored in UTC
+            LocalDate riyadhDate = createdAt
+                    .atZone(UTC_ZONE)
+                    .withZoneSameInstant(RIYADH_ZONE)
+                    .toLocalDate();
+
+            int year;
+
+            if (calendar.equals("hijri")) {
+
+                HijrahDate hijriDate =
+                        HijrahDate.from(riyadhDate);
+
+                year = hijriDate.get(ChronoField.YEAR_OF_ERA);
+
+            } else {
+
+                year = riyadhDate.getYear();
+            }
+
+            years.add(year);
+        }
+
+        return new ArrayList<>(years);
+    }
     private BigDecimal calculateGrowthPercentage(
             BigDecimal current,
             BigDecimal previous
@@ -1763,6 +1843,7 @@ public class DashboardService {
 
         return requestRepository.findAssignedRequestsByEmployee(
                         employee.getId(),
+                        List.of(PricingStatus.values()),
                         StaffRequestStatus.DELIVERED
                 )
                 .stream()
