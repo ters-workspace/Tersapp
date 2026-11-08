@@ -55,6 +55,7 @@ public class Coupon {
 
         // هل الكوبون مفعل؟
         private boolean active = true;
+        private boolean autoActivationPending = false;
 
         // تاريخ الانتهاء
         @NotNull(message = "لايمكن ترك تاريخ الانتهاء فارغا")

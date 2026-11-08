@@ -10,10 +10,7 @@ import org.example.tears.Enums.CouponCustomerType;
 import org.example.tears.Enums.ServiceOption;
 import org.example.tears.InpDTO.CreateCouponRequest;
 import org.example.tears.InpDTO.UpdateCouponRequest;
-import org.example.tears.Model.CarServiceRequest;
-import org.example.tears.Model.Coupon;
-import org.example.tears.Model.CouponUsage;
-import org.example.tears.Model.Customer;
+import org.example.tears.Model.*;
 import org.example.tears.Repository.CarServiceRequestRepository;
 import org.example.tears.Repository.CouponRepository;
 import org.example.tears.Repository.CouponUsageRepository;
@@ -23,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -67,7 +65,7 @@ public class CouponService {
                 Boolean.TRUE.equals(dto.getOneTimePerUser())
         );
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = TimeUtil.now();
 
         coupon.setCreatedAt(now);
 
@@ -143,10 +141,10 @@ public class CouponService {
             coupon.setActivationDate(dto.getActivationDate());
 
             coupon.setActive(
-                    !dto.getActivationDate().isAfter(LocalDateTime.now())
+                    !dto.getActivationDate().isAfter(TimeUtil.now())
             );
         }
-        coupon.setUpdatedAt(LocalDateTime.now());
+        coupon.setUpdatedAt(TimeUtil.now());
 
         return couponRepository.save(coupon);
     }
@@ -181,7 +179,7 @@ public class CouponService {
 
         // Expiry
         if (coupon.getExpiryDate() != null &&
-                coupon.getExpiryDate().isBefore(LocalDate.now())) {
+                coupon.getExpiryDate().isBefore(LocalDate.now(ZoneId.of("Asia/Riyadh")))) {
 
             throw new ApiException("الكوبون منتهي");
         }
@@ -332,7 +330,7 @@ public class CouponService {
             Customer customer
     ) {
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Riyadh"));
 
         return couponRepository.findAll()
                 .stream()
@@ -468,7 +466,7 @@ public class CouponService {
         usage.setCoupon(coupon);
         usage.setCustomer(customer);
         usage.setRequest(request);
-        usage.setUsedAt(LocalDateTime.now());
+        usage.setUsedAt(TimeUtil.now());
 
         couponUsageRepository.save(usage);
 
@@ -492,7 +490,7 @@ public class CouponService {
 
         long activeCoupons = couponRepository.countByActiveTrue();
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Riyadh"));
 
         LocalDate sevenDaysLater = today.plusDays(7);
 
@@ -619,7 +617,7 @@ public class CouponService {
         @Transactional
         public void activateScheduledCoupons() {
 
-            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime now = TimeUtil.now();
 
             List<Coupon> coupons =
                     couponRepository

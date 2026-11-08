@@ -27,7 +27,6 @@ public interface CouponRepository extends JpaRepository<Coupon, Integer> {
             LocalDate start,
             LocalDate end
     );
-
     @Query("""
         SELECT c
         FROM Coupon c
