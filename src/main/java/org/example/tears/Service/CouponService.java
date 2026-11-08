@@ -613,8 +613,8 @@ public class CouponService {
         couponRepository.delete(coupon);
     }
 
-        @Scheduled(fixedDelay = 60000)
-        @Transactional
+    @Scheduled(fixedDelay = 1000)
+    @Transactional
         public void activateScheduledCoupons() {
 
             LocalDateTime now = TimeUtil.now();
